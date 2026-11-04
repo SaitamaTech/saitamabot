@@ -60,15 +60,52 @@ test('menu command includes the supplied display image and sends long menu text 
     startedAt: Date.now(),
   });
   const sent = [];
-  await sendCommandResponse({ sendMessage: async (jid, payload) => sent.push({ jid, payload }) }, 'menu-test@s.whatsapp.net', result.text, { image: result.image });
+  const newsletterLookups = [];
+  const sock = {
+    newsletterMetadata: async (...args) => {
+      newsletterLookups.push(args);
+      return { id: '120363012345678901@newsletter', name: 'Saitama Updates' };
+    },
+    sendMessage: async (jid, payload) => sent.push({ jid, payload }),
+  };
+  await sendCommandResponse(sock, 'menu-test@s.whatsapp.net', result.text, { image: result.image });
 
   assert.ok(Buffer.isBuffer(result.image));
   assert.ok(result.image.length > 100_000);
   assert.equal(sent.length, 2);
+  assert.deepEqual(newsletterLookups, [['invite', '0029VbEKwbnCXC3EkbjtEW0f']]);
   assert.equal(sent[0].payload.image, result.image);
   assert.ok(sent[0].payload.caption.length <= 900);
+  assert.equal(sent[0].payload.contextInfo.forwardedNewsletterMessageInfo.newsletterJid, '120363012345678901@newsletter');
+  assert.equal(sent[0].payload.contextInfo.forwardedNewsletterMessageInfo.newsletterName, 'Saitama Updates');
+  assert.equal(sent[0].payload.contextInfo.forwardedNewsletterMessageInfo.serverMessageId, -1);
   assert.match(sent[1].payload.text, /• !menu/);
-  assert.match(sent[1].payload.text, /https:\/\/whatsapp\.com\/channel\/0029VbEKwbnCXC3EkbjtEW0f/);
+  assert.doesNotMatch(sent[1].payload.text, /https:\/\/whatsapp\.com\/channel/);
+  assert.equal(sent[1].payload.contextInfo, undefined);
+});
+
+test('text replies attach native channel context without printing the channel URL', async () => {
+  const sent = [];
+  let lookups = 0;
+  const sock = {
+    newsletterMetadata: async (type, inviteCode) => {
+      lookups += 1;
+      assert.equal(type, 'invite');
+      assert.equal(inviteCode, '0029VbEKwbnCXC3EkbjtEW0f');
+      return { id: '120363012345678901@newsletter', name: 'Saitama Updates' };
+    },
+    sendMessage: async (jid, payload) => sent.push(payload),
+  };
+
+  await sendCommandResponse(sock, 'user@s.whatsapp.net', 'Pong.');
+  await sendCommandResponse(sock, 'user@s.whatsapp.net', 'Alive.');
+
+  assert.equal(lookups, 1);
+  assert.equal(sent.length, 2);
+  for (const payload of sent) {
+    assert.equal(payload.contextInfo.forwardedNewsletterMessageInfo.newsletterJid, '120363012345678901@newsletter');
+    assert.doesNotMatch(payload.text, /https:\/\/whatsapp\.com\/channel/);
+  }
 });
 
 test('owner command shows the configured WhatsApp contact as a wa.me link', async () => {

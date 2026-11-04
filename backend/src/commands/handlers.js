@@ -14,6 +14,7 @@ import { findCommandSuggestion, formatActiveCommandMenu, formatCommandUsage, for
 const startedAt = Date.now();
 const games = new Map();
 const commandBuckets = new Map();
+const newsletterContextCache = new WeakMap();
 const menuImageUrl = new URL('../../../frontend/public/wp1809901-saitama-4k-wallpapers.jpg', import.meta.url);
 let menuImagePromise;
 let callsSinceSweep = 0;
@@ -56,6 +57,45 @@ async function loadMenuImage() {
     });
   }
   return menuImagePromise;
+}
+
+async function getNewsletterContext(sock) {
+  if (!appConfig.channelUrl) return null;
+  if (typeof sock.newsletterMetadata !== 'function') {
+    logger.warn('WhatsApp channel button unavailable: newsletter metadata is not supported by this socket');
+    return null;
+  }
+
+  const cached = newsletterContextCache.get(sock);
+  if (cached) return cached;
+
+  const inviteCode = new URL(appConfig.channelUrl).pathname.match(/\/channel\/([^/]+)/i)?.[1];
+  if (!inviteCode) {
+    logger.warn('WhatsApp channel button unavailable: channel URL has no invite code');
+    return null;
+  }
+
+  const contextPromise = sock.newsletterMetadata('invite', inviteCode).then((metadata) => {
+    if (!/^\d+@newsletter$/.test(metadata?.id || '') || !metadata?.name) {
+      throw new Error('WhatsApp returned incomplete channel metadata');
+    }
+    return {
+      forwardingScore: 1,
+      isForwarded: true,
+      forwardedNewsletterMessageInfo: {
+        newsletterJid: metadata.id,
+        serverMessageId: -1,
+        newsletterName: safeText(metadata.name, 100),
+      },
+    };
+  }).catch((error) => {
+    newsletterContextCache.delete(sock);
+    logger.warn('WhatsApp channel button metadata lookup failed', { reason: error.name });
+    return null;
+  });
+
+  newsletterContextCache.set(sock, contextPromise);
+  return contextPromise;
 }
 
 export async function reactToCommand(sock, jid, message) {
@@ -194,7 +234,7 @@ export async function executeCommand({ sock, userId, jid, senderJid, message, co
     };
     case 'ping': case 'ping2': case 'ping3': return { text: `Pong. Message processing took ${latency} ms.` };
     case 'alive': case 'runtime': case 'uptime': return { text: `*${appConfig.botName} is running*\nProcess uptime: ${fmtDuration(Math.floor((Date.now() - startedAt) / 1000))}\nSession: ${sock.user?.id ? 'connected' : 'reconnecting'}` };
-    case 'channel': return { text: appConfig.channelUrl ? `Official channel: ${appConfig.channelUrl}` : 'Official channel URL is not configured on the server.' };
+    case 'channel': return { text: appConfig.channelUrl ? 'Open the official channel using the WhatsApp button below.' : 'The official WhatsApp channel is not configured.' };
     case 'jid': return { text: `Chat JID: ${jid}` };
     case 'idch': return { text: `Chat ID: ${jid}` };
     case 'pair': return { text: 'Open the SAITAMA BOT dashboard, choose Connect WhatsApp, and enter your number to request a pairing code. Never share your code with anyone.' };
@@ -385,13 +425,13 @@ export async function processIncomingMessage({ sock, userId, message, io }) {
 
 export async function sendCommandResponse(sock,jid,result,{image,mentions,withoutPrefix=false}={}) {
   const body=safeText(result,3500);
-  const channel=appConfig.channelUrl;
-  const channelLine=channel ? `\n\n📣 OFFICIAL WHATSAPP CHANNEL\nFOLLOW FOR UPDATES\n${channel}` : '\n\n⚠️ OFFICIAL CHANNEL LINK IS NOT CONFIGURED.';
-  const formatted=withoutPrefix ? `${body}\n\n━━━━━━━━━━━━━━━━━━\n⚡ POWERED BY SAITAMA TECH${channelLine}\n━━━━━━━━━━━━━━━━━━` : `━━━━━━━━━━━━━━━━━━\n🔥 SAITAMA BOT\n━━━━━━━━━━━━━━━━━━\n\n${body}\n\n━━━━━━━━━━━━━━━━━━\n⚡ POWERED BY SAITAMA TECH${channelLine}\n━━━━━━━━━━━━━━━━━━`;
+  const formatted=withoutPrefix ? `${body}\n\n━━━━━━━━━━━━━━━━━━\n⚡ POWERED BY SAITAMA TECH\n━━━━━━━━━━━━━━━━━━` : `━━━━━━━━━━━━━━━━━━\n🔥 SAITAMA BOT\n━━━━━━━━━━━━━━━━━━\n\n${body}\n\n━━━━━━━━━━━━━━━━━━\n⚡ POWERED BY SAITAMA TECH\n━━━━━━━━━━━━━━━━━━`;
   const premiumFormatted = stylePremiumText(formatted);
+  const newsletterContext = await getNewsletterContext(sock);
+  const contextInfo = newsletterContext ? { contextInfo: newsletterContext } : {};
   if(image) {
     const caption = premiumFormatted.length > 900 ? '🔥 SAITAMA BOT' : premiumFormatted;
-    await sock.sendMessage(jid,{image,caption,mentions});
+    await sock.sendMessage(jid,{image,caption,mentions,...contextInfo});
     if(caption !== premiumFormatted) await sock.sendMessage(jid,{text:premiumFormatted,mentions});
-  } else await sock.sendMessage(jid,{text:premiumFormatted,mentions});
+  } else await sock.sendMessage(jid,{text:premiumFormatted,mentions,...contextInfo});
 }
