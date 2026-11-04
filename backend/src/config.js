@@ -5,6 +5,16 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 dotenv.config({ path: path.join(root, '.env') });
+const configuredSupabaseKey = process.env.SUPABASE_ANON_KEY || '';
+let supabaseKeyIsPublic = configuredSupabaseKey.startsWith('sb_publishable_');
+if (!supabaseKeyIsPublic) {
+  try {
+    const payload = JSON.parse(Buffer.from(configuredSupabaseKey.split('.')[1] || '', 'base64url').toString('utf8'));
+    supabaseKeyIsPublic = payload.role === 'anon';
+  } catch {
+    supabaseKeyIsPublic = false;
+  }
+}
 export const appConfig = {
   root,
   port: Number(process.env.PORT || 3000),
@@ -13,7 +23,7 @@ export const appConfig = {
   prefix: process.env.BOT_PREFIX || '.',
   channelUrl: process.env.WHATSAPP_CHANNEL_URL || '',
   supabaseUrl: (process.env.SUPABASE_URL || '').replace(/\/+$/, ''),
-  supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
+  supabaseAnonKey: supabaseKeyIsPublic ? configuredSupabaseKey : '',
   sessionDir: path.resolve(process.env.SESSION_DIR || path.join(root, 'backend/data/sessions')),
   ownerEmail: (process.env.OWNER_EMAIL || '').trim().toLowerCase(),
   ownerNumber: (process.env.OWNER_NUMBER || '').replace(/\D/g, ''),

@@ -19,6 +19,8 @@ router.get('/catalog', (_req,res) => res.json({commands:listCommands({search:_re
 router.get('/integrations', (_req,res) => res.json({
   channelConfigured:Boolean(appConfig.channelUrl),
   pairingAvailable:Boolean(getEncryptionKey()),
+  supabaseUrl:appConfig.supabaseUrl,
+  supabaseAnonKey:appConfig.supabaseAnonKey,
   aiConfigured:Boolean(process.env.OPENAI_API_KEY),
   tmdbConfigured:Boolean(process.env.TMDB_API_KEY),
   weatherConfigured:Boolean(process.env.WEATHER_API_KEY),

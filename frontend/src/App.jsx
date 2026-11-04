@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
-import { supabase } from './supabase.js';
+import { createSupabaseClient } from './supabase.js';
 import {
   Activity, ArrowDownRight, ArrowUpRight, Check, CheckCircle2, ChevronDown, ChevronRight,
   CircleDashed, Clock3, Copy, ExternalLink, Github, LayoutDashboard, LockKeyhole, LogOut,
@@ -34,7 +34,7 @@ function ConnectionPill({ status }) {
   return <span className={`connection-pill ${connected ? 'is-connected' : 'is-offline'}`}><i />{connected ? 'CONNECTED' : String(status || 'disconnected').replaceAll('_', ' ').toUpperCase()}</span>;
 }
 
-function AuthScreen({ onAuth, initialError = '' }) {
+function AuthScreen({ onAuth, initialError = '', supabaseClient, googleAuthStatus, googleAuthError }) {
   const [mode, setMode] = useState('login');
   const [values, setValues] = useState({ name: '', email: '', password: '' });
   const [busy, setBusy] = useState(false);
@@ -42,13 +42,13 @@ function AuthScreen({ onAuth, initialError = '' }) {
   const [showPassword, setShowPassword] = useState(false);
   const signInWithGoogle = async () => {
     setError(''); setBusy(true);
-    if (!supabase) {
-      setError('Google sign-in is not configured yet. Please use email and password.');
+    if (!supabaseClient) {
+      setError(googleAuthError || 'Google sign-in is not configured on the server. Please use email and password.');
       setBusy(false);
       return;
     }
     try {
-      const { error: googleError } = await supabase.auth.signInWithOAuth({
+      const { error: googleError } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: window.location.origin },
       });
@@ -90,9 +90,12 @@ function AuthScreen({ onAuth, initialError = '' }) {
         <h2>{mode === 'login' ? 'Welcome back.' : 'Create your account.'}</h2>
         <p className="muted">{mode === 'login' ? 'Sign in to manage your connected WhatsApp session.' : 'Set up an account to start configuring your bot.'}</p>
         <div className="auth-tabs"><button className={mode === 'login' ? 'selected' : ''} onClick={() => { setMode('login'); setError(''); }}>Sign in</button><button className={mode === 'register' ? 'selected' : ''} onClick={() => { setMode('register'); setError(''); }}>Create account</button></div>
-        <button className="button google-auth-button" type="button" onClick={signInWithGoogle} disabled={busy}>
-          <GoogleMark /> Continue with Google
+        <button className="button google-auth-button" type="button" onClick={signInWithGoogle} disabled={busy || googleAuthStatus !== 'ready'}>
+          {googleAuthStatus === 'loading' ? <span className="spinner" /> : <GoogleMark />}
+          {googleAuthStatus === 'loading' ? 'Checking Google sign-in…' : googleAuthStatus === 'ready' ? 'Continue with Google' : 'Google sign-in unavailable'}
         </button>
+        {googleAuthStatus === 'unconfigured' && <p className="google-auth-help">The server needs `SUPABASE_URL` and a public anon/publishable `SUPABASE_ANON_KEY`—not a service-role key.</p>}
+        {googleAuthStatus === 'error' && <p className="google-auth-help">{googleAuthError}</p>}
         <div className="auth-divider auth-divider-compact"><span /><small>OR USE EMAIL</small><span /></div>
         <form onSubmit={submit} className="auth-form">
           {mode === 'register' && <label>Display name<input autoComplete="name" value={values.name} onChange={(e) => setValues({ ...values, name: e.target.value })} placeholder="Your name" maxLength={80} required /></label>}
@@ -234,6 +237,9 @@ export default function App() {
   const [user,setUser]=useState(null);const [page,setPage]=useState('overview');const [sidebarOpen,setSidebarOpen]=useState(false);
   const [data,setData]=useState(null);const [integrations,setIntegrations]=useState(null);const [commands,setCommands]=useState([]);const [categories,setCategories]=useState([]);const [summary,setSummary]=useState(initialCounts);const [catalogLoading,setCatalogLoading]=useState(false);const [ownerData,setOwnerData]=useState(null);const [authChecking,setAuthChecking]=useState(true);const [toast,setToast]=useState('');
   const [authError,setAuthError]=useState('');
+  const [supabaseClient,setSupabaseClient]=useState(null);
+  const [googleAuthStatus,setGoogleAuthStatus]=useState('loading');
+  const [googleAuthError,setGoogleAuthError]=useState('');
   const authBootstrapStarted = useRef(false);
   const clearOAuthCallbackParams=()=>{
     const url=new URL(window.location.href);
@@ -246,19 +252,33 @@ export default function App() {
   useEffect(()=>{
     if(authBootstrapStarted.current)return;
     authBootstrapStarted.current=true;
-    api('/api/integrations').then(setIntegrations).catch(()=>{});
     const initializeAuth=async()=>{
+      let client=null;
+      try{
+        const config=await api('/api/integrations');
+        setIntegrations(config);
+        if(config.supabaseUrl&&config.supabaseAnonKey){
+          client=await createSupabaseClient(config.supabaseUrl,config.supabaseAnonKey);
+        }
+        setSupabaseClient(client);
+        setGoogleAuthStatus(client?'ready':'unconfigured');
+      }catch(error){
+        setGoogleAuthError('Could not load Google sign-in settings from the server. Please try again later.');
+        setGoogleAuthStatus('error');
+      }
       try{
         const oauthError=new URLSearchParams(window.location.search).get('error_description');
         if(oauthError)throw new Error(oauthError);
-        if(supabase){
-          const {data:sessionData,error:sessionError}=await supabase.auth.getSession();
+        const oauthCallback=new URLSearchParams(window.location.search).has('code')||window.location.hash.includes('access_token=');
+        if(oauthCallback&&!client)throw new Error(googleAuthError||'Google sign-in is not configured on the server.');
+        if(client){
+          const {data:sessionData,error:sessionError}=await client.auth.getSession();
           if(sessionError)throw sessionError;
           if(sessionData.session){
             let result;let exchangeError;
             try{result=await api('/api/auth/google',{method:'POST',body:JSON.stringify({accessToken:sessionData.session.access_token})});}
             catch(error){exchangeError=error;}
-            const {error:signOutError}=await supabase.auth.signOut();
+            const {error:signOutError}=await client.auth.signOut();
             if(exchangeError)throw exchangeError;
             if(signOutError)throw signOutError;
             setUser(result.user);
@@ -291,7 +311,7 @@ export default function App() {
   useEffect(()=>{if(page==='admin'&&!ownerData)api('/api/owner/overview').then(setOwnerData).catch(e=>setToast(e.message));},[page,ownerData]);
   useEffect(()=>{if(toast){const t=setTimeout(()=>setToast(''),4500);return()=>clearTimeout(t);}},[toast]);
   if(authChecking)return <div className="boot-screen"><div className="boot-logo"><Zap size={21}/></div><span className="spinner"/><small>INITIALIZING CONTROL ROOM</small></div>;
-  if(!user)return <AuthScreen onAuth={handleAuth} initialError={authError}/>;
+  if(!user)return <AuthScreen onAuth={handleAuth} initialError={authError} supabaseClient={supabaseClient} googleAuthStatus={googleAuthStatus} googleAuthError={googleAuthError}/>;
   const pageLabels={overview:'Overview',whatsapp:'WhatsApp session',commands:'Command library',admin:'Owner panel'};
   const ownerAccess=Boolean(data?.ownerAccess);
   return <div className="app-shell"><Sidebar page={page} setPage={setPage} user={user} ownerAccess={ownerAccess} onLogout={handleLogout} open={sidebarOpen} setOpen={setSidebarOpen}/><main className="main-area"><header className="topbar"><button className="mobile-menu" aria-label="Open menu" onClick={()=>setSidebarOpen(true)}><Menu size={19}/></button><div className="breadcrumb"><span>SAITAMA BOT</span><ChevronRight size={13}/><b>{pageLabels[page]||'Dashboard'}</b></div><div className="topbar-right"><span className="top-status"><i/> SYSTEM ONLINE</span><span className="top-divider"/><span className="top-avatar">{(user.name||'S')[0].toUpperCase()}</span></div></header>
