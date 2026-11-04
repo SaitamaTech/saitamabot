@@ -14,6 +14,8 @@ Commands with real handlers include core status commands; `.ai`/`.gpt` using an 
 
 The WhatsApp `.menu` command displays the supplied Saitama image, then shows the bot name, the account's configured prefix and uptime and groups active commands under their catalog categories. Long menus are sent as text separately from the image to stay within WhatsApp caption limits. The bot adds a lightning reaction when it receives a prefixed command. The menu excludes commands without working handlers; use the dashboard's Command library for the full inventory and setup status.
 
+When a command name is mistyped, the bot suggests a close match when available and shows that command's usage. Commands that require arguments return their documented syntax when the format is missing or invalid.
+
 The full requested inventory is searchable in **Command library**. Entries are labeled `ACTIVE`, `NEEDS SETUP`, or `NOT BUILT`, based on real handlers and the provider keys currently configured on the server. The remainder of the extensive download, compiler, anti-abuse, automation, owner, sports, media, GFX, and other moderation set is **not implemented** and is never presented as working.
 
 Command replies include a clickable official WhatsApp Channel URL when `WHATSAPP_CHANNEL_URL` is configured. The supplied brief did not contain that URL; until the operator configures the real official link, replies explicitly say the channel link is unavailable rather than inventing one. Interactive native WhatsApp buttons are not used; WhatsApp-rendered URL text is the supported fallback.

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import catalog from './catalog.json' with { type: 'json' };
-import { formatActiveCommandMenu } from './catalog.js';
+import { findCommandSuggestion, formatActiveCommandMenu, formatCommandUsage, formatUnknownCommand } from './catalog.js';
 import { executeCommand, isSafePublicUrl, parseSafeExpression, reactToCommand, sendCommandResponse } from './handlers.js';
 import { transformText } from './textStyles.js';
 
@@ -23,6 +23,18 @@ test('active command menu is grouped and uses the account prefix', () => {
   assert.match(menu, /├─〔 AI COMMANDS 〕/);
   assert.doesNotMatch(menu, /├─〔 SPORTS 〕/);
   assert.doesNotMatch(menu, /\.menu/);
+});
+
+test('command help suggests likely typos and shows the configured prefix and usage', () => {
+  assert.equal(findCommandSuggestion('pign')?.name, '.ping');
+  assert.match(formatUnknownCommand('pign', '!'), /Did you mean !ping\?/);
+  assert.match(formatUnknownCommand('pign', '!'), /How to use: !ping/);
+  assert.match(formatUnknownCommand('compilepythn', '!'), /!compilepython, but it is not available yet/);
+  assert.match(formatUnknownCommand('zzzzzzzzzzzz'), /Send \.menu/);
+  assert.equal(
+    formatCommandUsage(catalog.find((entry) => entry.name === '.ai'), '!'),
+    'How to use: !ai <question>\nWhat it does: Ask the configured OpenAI-compatible provider a question.',
+  );
 });
 
 test('menu command includes the supplied display image and sends long menu text separately', async () => {

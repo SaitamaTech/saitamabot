@@ -9,7 +9,7 @@ import { appConfig } from '../config.js';
 import { logger } from '../logger.js';
 import { transformText } from './textStyles.js';
 import catalog from './catalog.json' with { type: 'json' };
-import { formatActiveCommandMenu } from './catalog.js';
+import { findCommandSuggestion, formatActiveCommandMenu, formatCommandUsage, formatUnknownCommand } from './catalog.js';
 
 const startedAt = Date.now();
 const games = new Map();
@@ -150,7 +150,17 @@ export async function executeCommand({ sock, userId, jid, senderJid, message, co
     ? commandText.slice(commandToken.length).trimStart()
     : args.join(' ').trim();
   const latency = Math.max(1, Date.now() - messageTime);
-  if (!supported.has(command)) return { text: 'That command is not implemented yet. See the dashboard command catalogue for its status.' };
+  if (!supported.has(command)) {
+    const catalogEntry = catalog.find((item) => item.name === `.${command}`);
+    if (catalogEntry) {
+      return {
+        text: catalogEntry.status === 'implemented'
+          ? formatCommandUsage(catalogEntry, prefix)
+          : `${prefix}${command} is not available yet. See its status in the dashboard command catalogue.`,
+      };
+    }
+    return { text: formatUnknownCommand(command, prefix) };
+  }
   if (textCommands.has(command)) return { text: transformText(`.${command}`, argText) };
 
   switch (command) {
@@ -344,9 +354,10 @@ export async function processIncomingMessage({ sock, userId, message, io }) {
   let output;
   try { output=await executeCommand({sock,userId,jid,senderJid,message,command,args,prefix,startedAt:started}); }
   catch(error) { logger.error('Command handler error',{command,reason:error.name}); output={text:'The command failed unexpectedly. Please try again later.'}; }
-  const record=catalog.find(c=>c.name===`${prefix}${command}`);
+  const record=catalog.find(c=>c.name===`.${command}`);
   const isKnown=Boolean(record);
-  if(!isKnown) output={text:`Unknown command. Use ${prefix}menu to view active commands.`};
+  if(!isKnown) output={text:formatUnknownCommand(command,prefix)};
+  else if(output.text?.startsWith('Usage:')) output.text=formatCommandUsage(record,prefix);
   const elapsed=Date.now()-started;
   const category=record?.category || 'Unknown';
   const succeeded=record?.status==='implemented'&&!/not configured|temporarily unavailable|request failed|could not/i.test(output.text||'');
