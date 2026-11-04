@@ -1,6 +1,5 @@
 import crypto from 'node:crypto';
 import dns from 'node:dns/promises';
-import { readFile } from 'node:fs/promises';
 import { evaluate } from 'mathjs';
 import QRCode from 'qrcode';
 import ipaddr from 'ipaddr.js';
@@ -15,8 +14,6 @@ const startedAt = Date.now();
 const games = new Map();
 const commandBuckets = new Map();
 const newsletterContextCache = new WeakMap();
-const menuImageUrl = new URL('../../../frontend/public/wp1809901-saitama-4k-wallpapers.jpg', import.meta.url);
-let menuImagePromise;
 let callsSinceSweep = 0;
 const supported = new Set(catalog.filter((c) => c.status === 'implemented').map((c) => c.name.slice(1)));
 const textCommands = new Set(['acute','allstyles','fullwidth','inverted','smallcaps','tagstyle','circled','circledneg','curvy1','curvy2','curvy3','parenthesized','squared','squaredneg','mathbold','mathboldfraktur','mathbolditalic','mathboldscript','mathdoublestruck','mathfraktur','mathmonospace','mathsans','cjkthai','fauxcyrillic','fauxethiopic','regionalindicator','rockdots','stroked','subscript','superscript']);
@@ -44,19 +41,6 @@ export function stylePremiumText(value) {
     if (index % 2 === 1 || !part.trim()) return part;
     return transformText('.mathbold', part.toUpperCase());
   }).join('');
-}
-
-async function loadMenuImage() {
-  if (!menuImagePromise) {
-    menuImagePromise = readFile(menuImageUrl).catch((error) => {
-      if (error.code === 'ENOENT') {
-        logger.error('WhatsApp menu display image is missing', { file: menuImageUrl.pathname });
-        return null;
-      }
-      throw error;
-    });
-  }
-  return menuImagePromise;
 }
 
 async function getNewsletterContext(sock) {
@@ -220,7 +204,6 @@ export async function executeCommand({ sock, userId, jid, senderJid, message, co
           prefix,
           uptime: fmtDuration(Math.floor((Date.now() - startedAt) / 1000)),
         }),
-        image: await loadMenuImage(),
       };
     }
     case 'tqto': return { text: `Thanks for using ${safeText(appConfig.botName, 80)}.\nBuilt by ${safeText(process.env.OWNER_NAME || 'Saitama Tech', 80)}.` };
@@ -419,15 +402,20 @@ export async function processIncomingMessage({ sock, userId, message, io }) {
   const succeeded=record?.status==='implemented'&&!/not configured|temporarily unavailable|request failed|could not/i.test(output.text||'');
   await db.query('INSERT INTO command_usage(user_id,command,category,succeeded,duration_ms) VALUES($1,$2,$3,$4,$5)',[userId,command,category,succeeded,elapsed]).catch(()=>{});
   await db.query('UPDATE bot_statistics SET commands_executed=commands_executed+1,last_activity_at=now() WHERE user_id=$1',[userId]).catch(()=>{});
-  await sendCommandResponse(sock,jid,output.text||'Done.',{image:output.image,mentions:output.mentions,withoutPrefix:output.withoutPrefix});
+  await sendCommandResponse(sock,jid,output.text||'Done.',{
+    image:output.image,
+    mentions:output.mentions,
+    withoutPrefix:output.withoutPrefix,
+    channelAction: command === 'menu' || command === 'channel',
+  });
   io?.to(`user:${userId}`).emit('command:activity',{command,category,at:new Date().toISOString()});
 }
 
-export async function sendCommandResponse(sock,jid,result,{image,mentions,withoutPrefix=false}={}) {
+export async function sendCommandResponse(sock,jid,result,{image,mentions,withoutPrefix=false,channelAction=false}={}) {
   const body=safeText(result,3500);
   const formatted=withoutPrefix ? `${body}\n\n━━━━━━━━━━━━━━━━━━\n⚡ POWERED BY SAITAMA TECH\n━━━━━━━━━━━━━━━━━━` : `━━━━━━━━━━━━━━━━━━\n🔥 SAITAMA BOT\n━━━━━━━━━━━━━━━━━━\n\n${body}\n\n━━━━━━━━━━━━━━━━━━\n⚡ POWERED BY SAITAMA TECH\n━━━━━━━━━━━━━━━━━━`;
   const premiumFormatted = stylePremiumText(formatted);
-  const newsletterContext = await getNewsletterContext(sock);
+  const newsletterContext = channelAction ? await getNewsletterContext(sock) : null;
   const contextInfo = newsletterContext ? { contextInfo: newsletterContext } : {};
   if(image) {
     const caption = premiumFormatted.length > 900 ? '🔥 SAITAMA BOT' : premiumFormatted;
