@@ -155,7 +155,28 @@ export class WhatsAppManager {
   }
 
   async requestCode(session) {
-    await session.sock.waitForSocketOpen();
+    let resolveReady;
+    let rejectReady;
+    const pairingReady = new Promise((resolve, reject) => {
+      resolveReady = resolve;
+      rejectReady = reject;
+    });
+    const onUpdate = (update) => {
+      if (update.qr) resolveReady();
+      else if (update.connection === 'close') {
+        rejectReady(update.lastDisconnect?.error || new Error('WhatsApp closed before pairing initialization completed.'));
+      }
+    };
+    session.sock.ev.on('connection.update', onUpdate);
+    const timeout = setTimeout(() => {
+      rejectReady(new Error('Timed out waiting for WhatsApp pairing initialization.'));
+    }, 30_000);
+    try {
+      await Promise.all([session.sock.waitForSocketOpen(), pairingReady]);
+    } finally {
+      clearTimeout(timeout);
+      session.sock.ev.off('connection.update', onUpdate);
+    }
     if (this.connections.get(session.userId)!==session || session.closed) return;
     let lastError;
     for (let attempt=0; attempt<4; attempt++) {

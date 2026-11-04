@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
 import test from 'node:test';
 import pg from 'pg';
 import { closePool } from '../db.js';
@@ -28,7 +29,7 @@ test('repeating an active pairing request preserves its current code', async (t)
   assert.equal(requests, 0);
 });
 
-test('pairing code is requested only after the WhatsApp socket opens', async (t) => {
+test('pairing code is requested only after the WhatsApp pairing handshake', async (t) => {
   const originalQuery = pg.Pool.prototype.query;
   const previousDatabaseUrl = process.env.DATABASE_URL;
   process.env.DATABASE_URL = 'postgres://test:test@localhost/test';
@@ -44,13 +45,21 @@ test('pairing code is requested only after the WhatsApp socket opens', async (t)
   const manager = new WhatsAppManager({
     to: () => ({ emit: (event) => events.push(event) }),
   });
+  const socketEvents = new EventEmitter();
+  socketEvents.on('connection.update', (update) => {
+    if (update.qr) events.push('pairing-ready');
+  });
   const session = {
     userId: 'user-2',
     phone: '15551234567',
     status: 'pairing',
     closed: false,
     sock: {
-      waitForSocketOpen: async () => { events.push('socket-open'); },
+      ev: socketEvents,
+      waitForSocketOpen: async () => {
+        events.push('socket-open');
+        socketEvents.emit('connection.update', { qr: 'initialization-complete' });
+      },
       requestPairingCode: async () => { events.push('request-code'); return 'REAL-CODE'; },
     },
   };
@@ -58,6 +67,6 @@ test('pairing code is requested only after the WhatsApp socket opens', async (t)
 
   await manager.requestCode(session);
 
-  assert.deepEqual(events.slice(0, 2), ['socket-open', 'request-code']);
+  assert.deepEqual(events.slice(0, 3), ['socket-open', 'pairing-ready', 'request-code']);
   assert.equal(manager.getPairingCode(session.userId), 'REAL-CODE');
 });
