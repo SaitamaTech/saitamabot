@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import dns from 'node:dns/promises';
+import { readFile } from 'node:fs/promises';
 import { evaluate } from 'mathjs';
 import QRCode from 'qrcode';
 import ipaddr from 'ipaddr.js';
@@ -8,13 +9,25 @@ import { appConfig } from '../config.js';
 import { logger } from '../logger.js';
 import { transformText } from './textStyles.js';
 import catalog from './catalog.json' with { type: 'json' };
+import { formatActiveCommandMenu } from './catalog.js';
 
 const startedAt = Date.now();
 const games = new Map();
 const commandBuckets = new Map();
+const menuImageUrl = new URL('../../../frontend/public/wp1809901-saitama-4k-wallpapers.jpg', import.meta.url);
+let menuImagePromise;
 let callsSinceSweep = 0;
 const supported = new Set(catalog.filter((c) => c.status === 'implemented').map((c) => c.name.slice(1)));
 const textCommands = new Set(['acute','allstyles','fullwidth','inverted','smallcaps','tagstyle','circled','circledneg','curvy1','curvy2','curvy3','parenthesized','squared','squaredneg','mathbold','mathboldfraktur','mathbolditalic','mathboldscript','mathdoublestruck','mathfraktur','mathmonospace','mathsans','cjkthai','fauxcyrillic','fauxethiopic','regionalindicator','rockdots','stroked','subscript','superscript']);
+const emojiDigits = [...'😀😁😂🤣😃😄😅😆😉😊😋😎😍😘🥰😗'];
+const emojiDigitValues = new Map(emojiDigits.map((emoji, value) => [emoji, value]));
+const scienceFacts = [
+  'A day on Venus is longer than its year.',
+  'Lightning is hotter than the surface of the Sun.',
+  'Water expands when it freezes, which makes ice less dense than liquid water.',
+  'Octopuses have three hearts.',
+  'The International Space Station completes an orbit around Earth about every 90 minutes.',
+];
 
 const fmtDuration = (seconds) => {
   const d = Math.floor(seconds / 86400); const h = Math.floor((seconds % 86400) / 3600); const m = Math.floor((seconds % 3600) / 60); const s = seconds % 60;
@@ -22,6 +35,27 @@ const fmtDuration = (seconds) => {
 };
 const safeText = (value, max = 1500) => String(value ?? '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').slice(0, max);
 const timeoutSignal = (ms = 12000) => AbortSignal.timeout(ms);
+
+async function loadMenuImage() {
+  if (!menuImagePromise) {
+    menuImagePromise = readFile(menuImageUrl).catch((error) => {
+      if (error.code === 'ENOENT') {
+        logger.error('WhatsApp menu display image is missing', { file: menuImageUrl.pathname });
+        return null;
+      }
+      throw error;
+    });
+  }
+  return menuImagePromise;
+}
+
+export async function reactToCommand(sock, jid, message) {
+  try {
+    await sock.sendMessage(jid, { react: { text: '⚡', key: message.key } });
+  } catch (error) {
+    logger.warn('WhatsApp command reaction failed', { reason: error.name });
+  }
+}
 
 export async function isSafePublicUrl(raw) {
   let url;
@@ -106,23 +140,61 @@ function mentionedJids(message, text, participants = []) {
   return digits.map((number) => participants.find((p) => parseDigits(p.id) === number)?.id).filter(Boolean);
 }
 
-export async function executeCommand({ sock, userId, jid, senderJid, message, command, args, startedAt: messageTime }) {
-  const argText = args.join(' ').trim();
+export async function executeCommand({ sock, userId, jid, senderJid, message, command, args, prefix = appConfig.prefix, startedAt: messageTime }) {
+  const messageText = getText(message).trim();
+  const commandText = messageText.startsWith(prefix)
+    ? messageText.slice(prefix.length).trimStart()
+    : '';
+  const commandToken = commandText.split(/\s/, 1)[0].toLowerCase();
+  const argText = commandToken === command
+    ? commandText.slice(commandToken.length).trimStart()
+    : args.join(' ').trim();
   const latency = Math.max(1, Date.now() - messageTime);
   if (!supported.has(command)) return { text: 'That command is not implemented yet. See the dashboard command catalogue for its status.' };
   if (textCommands.has(command)) return { text: transformText(`.${command}`, argText) };
 
   switch (command) {
     case 'menu': {
-      const list = catalog.filter((c) => c.status === 'implemented').map((c) => c.name).join('  ');
-      return { text: `*ACTIVE COMMANDS (${catalog.filter((c) => c.status === 'implemented').length})*\n${list}\n\nUse the dashboard to search all commands and see which integrations are still pending.` };
+      return {
+        text: formatActiveCommandMenu({
+          botName: appConfig.botName,
+          prefix,
+          uptime: fmtDuration(Math.floor((Date.now() - startedAt) / 1000)),
+        }),
+        image: await loadMenuImage(),
+      };
     }
+    case 'tqto': return { text: `Thanks for using ${safeText(appConfig.botName, 80)}.\nBuilt by ${safeText(process.env.OWNER_NAME || 'Saitama Tech', 80)}.` };
     case 'owner': return { text: `*${safeText(process.env.OWNER_NAME || 'Saitama Tech', 80)}*\n${process.env.OWNER_NUMBER ? `WhatsApp: +${appConfig.ownerNumber}` : 'Owner number is not configured.'}` };
     case 'ping': case 'ping2': case 'ping3': return { text: `Pong. Message processing took ${latency} ms.` };
     case 'alive': case 'runtime': case 'uptime': return { text: `*${appConfig.botName} is running*\nProcess uptime: ${fmtDuration(Math.floor((Date.now() - startedAt) / 1000))}\nSession: ${sock.user?.id ? 'connected' : 'reconnecting'}` };
     case 'channel': return { text: appConfig.channelUrl ? `Official channel: ${appConfig.channelUrl}` : 'Official channel URL is not configured on the server.' };
     case 'jid': return { text: `Chat JID: ${jid}` };
+    case 'idch': return { text: `Chat ID: ${jid}` };
     case 'pair': return { text: 'Open the SAITAMA BOT dashboard, choose Connect WhatsApp, and enter your number to request a pairing code. Never share your code with anyone.' };
+    case 'emojiencrypt': {
+      if (!argText) return { text: 'Usage: .emojiencrypt <text>.' };
+      const bytes = Buffer.from(safeText(argText, 400), 'utf8');
+      if (Buffer.byteLength(argText, 'utf8') > 400) return { text: 'Keep the text to 400 UTF-8 bytes or fewer.' };
+      const encoded = [...bytes.toString('hex')].map((digit) => emojiDigits[Number.parseInt(digit, 16)]).join('');
+      return { text: encoded };
+    }
+    case 'emojidecrypt': {
+      if (!argText) return { text: 'Usage: .emojidecrypt <emoji sequence>.' };
+      const symbols = [...argText.replace(/\s/g, '')];
+      if (!symbols.length || symbols.length % 2 !== 0 || symbols.length > 800) {
+        return { text: 'Provide an even-length emoji sequence from .emojiencrypt (up to 400 UTF-8 bytes).' };
+      }
+      const values = symbols.map((emoji) => emojiDigitValues.get(emoji));
+      if (values.some((value) => value === undefined)) return { text: 'That sequence contains an unsupported emoji.' };
+      const hex = values.map((value) => value.toString(16)).join('');
+      try {
+        return { text: new TextDecoder('utf-8', { fatal: true }).decode(Buffer.from(hex, 'hex')) };
+      } catch {
+        return { text: 'That emoji sequence does not contain valid encoded text.' };
+      }
+    }
+    case 'sciencefact': return { text: `🔬 ${scienceFacts[crypto.randomInt(scienceFacts.length)]}` };
     case 'ai': case 'gpt': {
       if (!argText) return { text: `Usage: .${command} <question>` };
       return { text: await openAi(argText) };
@@ -256,6 +328,7 @@ export async function processIncomingMessage({ sock, userId, message, io }) {
   const [commandRaw,...args]=raw.slice(prefix.length).trim().split(/\s+/);
   const command=(commandRaw||'').toLowerCase();
   if(!command) return;
+  await reactToCommand(sock,jid,message);
   const now=Date.now();
   const rateKey=userId;
   let bucket=commandBuckets.get(rateKey);
@@ -269,7 +342,7 @@ export async function processIncomingMessage({ sock, userId, message, io }) {
   }
   const started=Date.now();
   let output;
-  try { output=await executeCommand({sock,userId,jid,senderJid,message,command,args,startedAt:started}); }
+  try { output=await executeCommand({sock,userId,jid,senderJid,message,command,args,prefix,startedAt:started}); }
   catch(error) { logger.error('Command handler error',{command,reason:error.name}); output={text:'The command failed unexpectedly. Please try again later.'}; }
   const record=catalog.find(c=>c.name===`${prefix}${command}`);
   const isKnown=Boolean(record);
@@ -288,6 +361,9 @@ export async function sendCommandResponse(sock,jid,result,{image,mentions,withou
   const channel=appConfig.channelUrl;
   const channelLine=channel ? `\n📢 VIEW CHANNEL\n${channel}` : '\n⚠️ VIEW CHANNEL is unavailable until WHATSAPP_CHANNEL_URL is configured.';
   const formatted=withoutPrefix ? `${body}\n\n━━━━━━━━━━━━━━━━━━\n⚡ Powered by Saitama Tech${channelLine}\n━━━━━━━━━━━━━━━━━━` : `━━━━━━━━━━━━━━━━━━\n🔥 SAITAMA BOT\n━━━━━━━━━━━━━━━━━━\n\n${body}\n\n━━━━━━━━━━━━━━━━━━\n⚡ Powered by Saitama Tech${channelLine}\n━━━━━━━━━━━━━━━━━━`;
-  if(image) await sock.sendMessage(jid,{image,caption:formatted,mentions});
-  else await sock.sendMessage(jid,{text:formatted,mentions});
+  if(image) {
+    const caption = formatted.length > 900 ? '🔥 SAITAMA BOT' : formatted;
+    await sock.sendMessage(jid,{image,caption,mentions});
+    if(caption !== formatted) await sock.sendMessage(jid,{text:formatted,mentions});
+  } else await sock.sendMessage(jid,{text:formatted,mentions});
 }

@@ -11,6 +11,33 @@ export function listCommands({ search = '', category = '', status = '' } = {}) {
   });
 }
 
+export function formatActiveCommandMenu({ botName = 'SAITAMA BOT', prefix = '.', uptime = 'unknown' } = {}) {
+  const activeCommands = catalog.filter((item) => item.status === 'implemented');
+  const categories = new Map();
+  for (const command of activeCommands) {
+    if (!categories.has(command.category)) categories.set(command.category, []);
+    categories.get(command.category).push(command.name.replace(/^\./, () => prefix));
+  }
+
+  const lines = [
+    '*╭─〔 INFO BOT 〕*',
+    `│ Name: ${botName}`,
+    `│ Prefix: ${prefix}`,
+    `│ Active commands: ${activeCommands.length}`,
+    `│ Uptime: ${uptime}`,
+    '*╰──────────────*',
+    '',
+    '*╭─〔 MAIN MENU 〕*',
+  ];
+
+  for (const [category, commands] of categories) {
+    lines.push(`*├─〔 ${category} 〕*`, ...commands.map((command) => `│ ${command}`));
+  }
+
+  lines.push('*╰──────────────*', '', "See the dashboard's Command library for the full catalogue and setup status.");
+  return lines.join('\n');
+}
+
 export function getCatalogSummary() {
   const implemented = catalog.filter((item) => item.status === 'implemented').length;
   const notImplemented = catalog.length - implemented;

@@ -101,11 +101,11 @@
   {
     "name": ".tqto",
     "category": "CORE COMMANDS",
-    "description": "Not registered yet; this command is not available.",
-    "usage": "Not available",
-    "permission": "not implemented",
-    "status": "not_implemented",
-    "apiRequirement": "not implemented"
+    "description": "Show the bot's project credits.",
+    "usage": ".tqto",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
   },
   {
     "name": ".ai",
@@ -1091,20 +1091,20 @@
   {
     "name": ".emojiencrypt",
     "category": "OTHER UTILITIES",
-    "description": "Not registered yet; this command is not available.",
-    "usage": "Not available",
-    "permission": "not implemented",
-    "status": "not_implemented",
-    "apiRequirement": "not implemented"
+    "description": "Encode short text as a reversible emoji sequence.",
+    "usage": ".emojiencrypt <text>",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
   },
   {
     "name": ".emojidecrypt",
     "category": "OTHER UTILITIES",
-    "description": "Not registered yet; this command is not available.",
-    "usage": "Not available",
-    "permission": "not implemented",
-    "status": "not_implemented",
-    "apiRequirement": "not implemented"
+    "description": "Decode a sequence produced by .emojiencrypt.",
+    "usage": ".emojidecrypt <emoji sequence>",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
   },
   {
     "name": ".fdroidapp",
@@ -2630,11 +2630,11 @@
   {
     "name": ".idch",
     "category": "GENERAL UTILITIES",
-    "description": "Not registered yet; this command is not available.",
-    "usage": "Not available",
-    "permission": "not implemented",
-    "status": "not_implemented",
-    "apiRequirement": "not implemented"
+    "description": "Show the current WhatsApp chat identifier.",
+    "usage": ".idch",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
   },
   {
     "name": ".book",
@@ -2675,10 +2675,10 @@
   {
     "name": ".sciencefact",
     "category": "GENERAL UTILITIES",
-    "description": "Not registered yet; this command is not available.",
-    "usage": "Not available",
-    "permission": "not implemented",
-    "status": "not_implemented",
-    "apiRequirement": "not implemented"
+    "description": "Share a randomly selected science fact.",
+    "usage": ".sciencefact",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
   }
 ]
