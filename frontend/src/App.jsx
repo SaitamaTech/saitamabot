@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
+import { supabase } from './supabase.js';
 import {
   Activity, ArrowDownRight, ArrowUpRight, Check, CheckCircle2, ChevronDown, ChevronRight,
   CircleDashed, Clock3, Copy, ExternalLink, Github, LayoutDashboard, LockKeyhole, LogOut,
@@ -33,12 +34,31 @@ function ConnectionPill({ status }) {
   return <span className={`connection-pill ${connected ? 'is-connected' : 'is-offline'}`}><i />{connected ? 'CONNECTED' : String(status || 'disconnected').replaceAll('_', ' ').toUpperCase()}</span>;
 }
 
-function AuthScreen({ onAuth }) {
+function AuthScreen({ onAuth, initialError = '' }) {
   const [mode, setMode] = useState('login');
   const [values, setValues] = useState({ name: '', email: '', password: '' });
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(initialError);
   const [showPassword, setShowPassword] = useState(false);
+  const signInWithGoogle = async () => {
+    setError(''); setBusy(true);
+    if (!supabase) {
+      setError('Google sign-in is not configured yet. Please use email and password.');
+      setBusy(false);
+      return;
+    }
+    try {
+      const { error: googleError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      });
+      if (googleError) setError(googleError.message);
+    } catch (googleError) {
+      setError(googleError.message || 'Could not start Google sign-in.');
+    } finally {
+      setBusy(false);
+    }
+  };
   const submit = async (event) => {
     event.preventDefault(); setError(''); setBusy(true);
     try {
@@ -70,6 +90,10 @@ function AuthScreen({ onAuth }) {
         <h2>{mode === 'login' ? 'Welcome back.' : 'Create your account.'}</h2>
         <p className="muted">{mode === 'login' ? 'Sign in to manage your connected WhatsApp session.' : 'Set up an account to start configuring your bot.'}</p>
         <div className="auth-tabs"><button className={mode === 'login' ? 'selected' : ''} onClick={() => { setMode('login'); setError(''); }}>Sign in</button><button className={mode === 'register' ? 'selected' : ''} onClick={() => { setMode('register'); setError(''); }}>Create account</button></div>
+        <button className="button google-auth-button" type="button" onClick={signInWithGoogle} disabled={busy}>
+          <GoogleMark /> Continue with Google
+        </button>
+        <div className="auth-divider auth-divider-compact"><span /><small>OR USE EMAIL</small><span /></div>
         <form onSubmit={submit} className="auth-form">
           {mode === 'register' && <label>Display name<input autoComplete="name" value={values.name} onChange={(e) => setValues({ ...values, name: e.target.value })} placeholder="Your name" maxLength={80} required /></label>}
           <label>Email address<input type="email" autoComplete="email" value={values.email} onChange={(e) => setValues({ ...values, email: e.target.value })} placeholder="you@example.com" maxLength={254} required /></label>
@@ -84,6 +108,15 @@ function AuthScreen({ onAuth }) {
     <section className="auth-feature-row" id="features"><div><span className="feature-icon"><Smartphone size={17} /></span><b>Pair securely</b><small>Link with a WhatsApp pairing code.</small></div><div><span className="feature-icon"><TerminalSquare size={17} /></span><b>Automate clearly</b><small>Know what is implemented and what needs setup.</small></div><div><span className="feature-icon"><Activity size={17} /></span><b>Stay in control</b><small>Monitor status and delete your session any time.</small></div></section>
     <footer className="auth-footer"><span>© SAITAMA TECH</span><span>WhatsApp integration is unofficial and may be affected by platform restrictions.</span><a href={GITHUB} target="_blank" rel="noreferrer">GitHub <ExternalLink size={12} /></a></footer>
   </div>;
+}
+
+function GoogleMark() {
+  return <svg aria-hidden="true" viewBox="0 0 48 48" className="google-mark">
+    <path fill="#4285F4" d="M47.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h13.49c-.58 2.96-2.27 5.48-4.75 7.18l7.28 5.65c4.25-3.92 6.96-9.69 6.96-17.3Z" />
+    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.28-5.65c-2.02 1.35-4.6 2.15-8.63 2.15-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z" />
+    <path fill="#FBBC05" d="M10.53 28.59a14.4 14.4 0 0 1 0-9.18l-7.98-6.19a24 24 0 0 0 0 21.56l7.98-6.19Z" />
+    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z" />
+  </svg>;
 }
 
 function Sidebar({ page, setPage, user, ownerAccess, onLogout, open, setOpen }) {
@@ -200,9 +233,46 @@ function AdminPage({ data, onLoadUsers }) {
 export default function App() {
   const [user,setUser]=useState(null);const [page,setPage]=useState('overview');const [sidebarOpen,setSidebarOpen]=useState(false);
   const [data,setData]=useState(null);const [integrations,setIntegrations]=useState(null);const [commands,setCommands]=useState([]);const [categories,setCategories]=useState([]);const [summary,setSummary]=useState(initialCounts);const [catalogLoading,setCatalogLoading]=useState(false);const [ownerData,setOwnerData]=useState(null);const [authChecking,setAuthChecking]=useState(true);const [toast,setToast]=useState('');
+  const [authError,setAuthError]=useState('');
+  const authBootstrapStarted = useRef(false);
+  const clearOAuthCallbackParams=()=>{
+    const url=new URL(window.location.href);
+    if(!url.searchParams.has('code')&&!url.searchParams.has('error'))return;
+    for(const key of ['code','error','error_code','error_description'])url.searchParams.delete(key);
+    window.history.replaceState({},document.title,`${url.pathname}${url.search}${url.hash}`);
+  };
   const refresh=useCallback(async()=>{if(!user)return;try{const result=await api('/api/dashboard');setData(result);return result;}catch(e){if(e.message.includes('Sign in')||e.message.includes('expired'))setUser(null);throw e;}},[user]);
   const loadCatalog=useCallback(async()=>{setCatalogLoading(true);try{const result=await api('/api/catalog');setCommands(result.commands);setCategories(result.categories);setSummary(result.summary);}catch(e){setToast(e.message);}finally{setCatalogLoading(false);}},[]);
-  useEffect(()=>{api('/api/integrations').then(setIntegrations).catch(()=>{});api('/api/auth/me').then(result=>setUser(result.user)).catch(()=>{}).finally(()=>setAuthChecking(false));},[]);
+  useEffect(()=>{
+    if(authBootstrapStarted.current)return;
+    authBootstrapStarted.current=true;
+    api('/api/integrations').then(setIntegrations).catch(()=>{});
+    const initializeAuth=async()=>{
+      try{
+        const oauthError=new URLSearchParams(window.location.search).get('error_description');
+        if(oauthError)throw new Error(oauthError);
+        if(supabase){
+          const {data:sessionData,error:sessionError}=await supabase.auth.getSession();
+          if(sessionError)throw sessionError;
+          if(sessionData.session){
+            let result;let exchangeError;
+            try{result=await api('/api/auth/google',{method:'POST',body:JSON.stringify({accessToken:sessionData.session.access_token})});}
+            catch(error){exchangeError=error;}
+            const {error:signOutError}=await supabase.auth.signOut();
+            if(exchangeError)throw exchangeError;
+            if(signOutError)throw signOutError;
+            setUser(result.user);
+            return;
+          }
+        }
+        const result=await api('/api/auth/me');
+        setUser(result.user);
+      }catch(error){
+        if(window.location.search.includes('error')||error.message!=='Sign in to continue.')setAuthError(error.message);
+      }finally{clearOAuthCallbackParams();setAuthChecking(false);}
+    };
+    initializeAuth();
+  },[]);
   useEffect(()=>{if(!user)return;refresh().catch(()=>{});},[user,refresh]);
   useEffect(()=>{if(page==='commands'&&!commands.length)loadCatalog();},[page,commands.length,loadCatalog]);
   useEffect(()=>{
@@ -221,7 +291,7 @@ export default function App() {
   useEffect(()=>{if(page==='admin'&&!ownerData)api('/api/owner/overview').then(setOwnerData).catch(e=>setToast(e.message));},[page,ownerData]);
   useEffect(()=>{if(toast){const t=setTimeout(()=>setToast(''),4500);return()=>clearTimeout(t);}},[toast]);
   if(authChecking)return <div className="boot-screen"><div className="boot-logo"><Zap size={21}/></div><span className="spinner"/><small>INITIALIZING CONTROL ROOM</small></div>;
-  if(!user)return <AuthScreen onAuth={handleAuth}/>;
+  if(!user)return <AuthScreen onAuth={handleAuth} initialError={authError}/>;
   const pageLabels={overview:'Overview',whatsapp:'WhatsApp session',commands:'Command library',admin:'Owner panel'};
   const ownerAccess=Boolean(data?.ownerAccess);
   return <div className="app-shell"><Sidebar page={page} setPage={setPage} user={user} ownerAccess={ownerAccess} onLogout={handleLogout} open={sidebarOpen} setOpen={setSidebarOpen}/><main className="main-area"><header className="topbar"><button className="mobile-menu" aria-label="Open menu" onClick={()=>setSidebarOpen(true)}><Menu size={19}/></button><div className="breadcrumb"><span>SAITAMA BOT</span><ChevronRight size={13}/><b>{pageLabels[page]||'Dashboard'}</b></div><div className="topbar-right"><span className="top-status"><i/> SYSTEM ONLINE</span><span className="top-divider"/><span className="top-avatar">{(user.name||'S')[0].toUpperCase()}</span></div></header>

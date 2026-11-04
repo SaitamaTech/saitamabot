@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
-import { authenticate, login, logout, register, requireOwner } from '../auth.js';
+import { authenticate, googleLogin, login, logout, register, requireOwner } from '../auth.js';
 import { appConfig, getEncryptionKey } from '../config.js';
 import { getPool } from '../db.js';
 import { getCategories, getLiveCatalogSummary, isCommandConfigured, listCommands } from '../commands/catalog.js';
@@ -26,6 +26,7 @@ router.get('/integrations', (_req,res) => res.json({
 }));
 router.post('/auth/register', authLimiter, register);
 router.post('/auth/login', authLimiter, login);
+router.post('/auth/google', authLimiter, googleLogin);
 router.post('/auth/logout', authenticate, logout);
 router.get('/auth/me', authenticate, (req,res) => res.json({user:{id:req.user.id,email:req.user.email,name:req.user.name,createdAt:req.user.created_at}}));
 

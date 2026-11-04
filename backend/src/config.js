@@ -12,6 +12,8 @@ export const appConfig = {
   botName: process.env.BOT_NAME || 'SAITAMA BOT',
   prefix: process.env.BOT_PREFIX || '.',
   channelUrl: process.env.WHATSAPP_CHANNEL_URL || '',
+  supabaseUrl: (process.env.SUPABASE_URL || '').replace(/\/+$/, ''),
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
   sessionDir: path.resolve(process.env.SESSION_DIR || path.join(root, 'backend/data/sessions')),
   ownerEmail: (process.env.OWNER_EMAIL || '').trim().toLowerCase(),
   ownerNumber: (process.env.OWNER_NUMBER || '').replace(/\D/g, ''),

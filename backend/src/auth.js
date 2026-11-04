@@ -1,6 +1,8 @@
 import bcrypt from 'bcryptjs';
+import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import { appConfig } from './config.js';
 import { getPool } from './db.js';
 
 const cookieName = 'saitama_session';
@@ -66,6 +68,103 @@ export async function login(req, res) {
   const user = result.rows[0];
   if (!user || !(await bcrypt.compare(parsed.data.password, user.password_hash))) return res.status(401).json({ error: 'Email or password is incorrect.' });
   await db.query('UPDATE users SET last_login_at=now() WHERE id=$1', [user.id]);
+  setSessionCookie(res, user);
+  return res.json({ user: publicUser(user) });
+}
+
+export async function googleLogin(req, res) {
+  const parsed = z.object({ accessToken: z.string().min(1).max(16_384) }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'A valid Google sign-in session is required.' });
+  if (!appConfig.supabaseUrl || !appConfig.supabaseAnonKey) {
+    return res.status(503).json({ error: 'Google sign-in is not configured on this server.' });
+  }
+
+  let verification;
+  try {
+    verification = await fetch(`${appConfig.supabaseUrl}/auth/v1/user`, {
+      headers: {
+        apikey: appConfig.supabaseAnonKey,
+        authorization: `Bearer ${parsed.data.accessToken}`,
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch (error) {
+    console.error('[auth] Supabase identity verification failed', error.message);
+    return res.status(503).json({ error: 'Google sign-in could not be verified right now. Please try again.' });
+  }
+  if (!verification.ok) {
+    const status = verification.status === 401 || verification.status === 403 ? 401 : 503;
+    return res.status(status).json({ error: 'Google sign-in could not be verified. Please try again.' });
+  }
+
+  let identity;
+  try {
+    identity = await verification.json();
+  } catch {
+    return res.status(502).json({ error: 'The identity provider returned an invalid response.' });
+  }
+  if (!identity || typeof identity !== 'object') {
+    return res.status(502).json({ error: 'The identity provider returned an invalid response.' });
+  }
+  const isGoogleIdentity = identity.app_metadata?.provider === 'google'
+    || (Array.isArray(identity.identities) && identity.identities.some((provider) => provider?.provider === 'google'));
+  const email = typeof identity.email === 'string' ? identity.email.trim().toLowerCase() : '';
+  if (!isGoogleIdentity || !emailSchema.safeParse(email).success || !(identity.email_confirmed_at || identity.confirmed_at)) {
+    return res.status(401).json({ error: 'Use a Google account with a verified email address.' });
+  }
+
+  const db = getPool();
+  const client = await db.connect();
+  let user;
+  try {
+    await client.query('BEGIN');
+    const existing = await client.query(
+      'SELECT id,email,name,created_at FROM users WHERE email=$1 FOR UPDATE',
+      [email],
+    );
+    if (email === (process.env.OWNER_EMAIL || '').trim().toLowerCase() && !existing.rowCount) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: 'The configured owner account must be provisioned by the server administrator.' });
+    }
+
+    if (existing.rowCount) {
+      const updated = await client.query(
+        'UPDATE users SET last_login_at=now() WHERE id=$1 RETURNING id,email,name,created_at',
+        [existing.rows[0].id],
+      );
+      user = updated.rows[0];
+    } else {
+      const metadata = identity.user_metadata || {};
+      const displayName = [metadata.full_name, metadata.name]
+        .find((value) => typeof value === 'string' && value.trim());
+      const name = (displayName || email.split('@')[0]).trim().slice(0, 80) || 'Google user';
+      const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 12);
+      const created = await client.query(
+        `INSERT INTO users(email,name,password_hash,last_login_at)
+         VALUES($1,$2,$3,now())
+         ON CONFLICT(email) DO UPDATE SET last_login_at=now()
+         RETURNING id,email,name,created_at`,
+        [email, name, passwordHash],
+      );
+      user = created.rows[0];
+      await client.query('INSERT INTO whatsapp_sessions(user_id) VALUES($1) ON CONFLICT(user_id) DO NOTHING', [user.id]);
+      await client.query(
+        'INSERT INTO user_settings(user_id,bot_name) VALUES($1,$2) ON CONFLICT(user_id) DO NOTHING',
+        [user.id, process.env.BOT_NAME || 'SAITAMA BOT'],
+      );
+      await client.query('INSERT INTO bot_configurations(user_id) VALUES($1) ON CONFLICT(user_id) DO NOTHING', [user.id]);
+      await client.query('INSERT INTO bot_statistics(user_id) VALUES($1) ON CONFLICT(user_id) DO NOTHING', [user.id]);
+    }
+
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('[auth] Google account sign-in failed', error.message);
+    return res.status(500).json({ error: 'Could not sign in with Google.' });
+  } finally {
+    client.release();
+  }
+
   setSessionCookie(res, user);
   return res.json({ user: publicUser(user) });
 }

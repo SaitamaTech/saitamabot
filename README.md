@@ -8,6 +8,8 @@ SAITAMA BOT is a React/Vite dashboard and Node/Express WhatsApp automation servi
 
 The backend supports registration/login, HTTP-only signed cookies, private Socket.IO rooms, per-account encrypted WhatsApp auth files (AES-256-GCM), pair/disconnect/reconnect flows, session status, usage metrics, PostgreSQL persistence, and owner-email-gated metrics/account listing. The owner identity is reserved during public registration and must be provisioned from the server CLI.
 
+Users can sign in with Google through Supabase Auth or use the existing email/password flow. Configure the Google provider in Supabase, set `SUPABASE_URL` and `SUPABASE_ANON_KEY` on the backend, and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` before building the frontend (the Vite variables are public provider configuration, never service-role secrets). In Supabase, set the Site URL to the deployed app origin and allow that origin and `http://localhost:5173` as redirect URLs. In Google Cloud Console, authorize the Supabase callback URL shown in the Supabase Google provider settings (`https://<project-ref>.supabase.co/auth/v1/callback`). The backend verifies each Supabase access token and requires a confirmed email before issuing its own HTTP-only session cookie.
+
 Commands with real handlers include core status commands; `.ai`/`.gpt` using an OpenAI-compatible provider; six URL-shortener aliases using the configured shortener endpoint; TMDB search/details; coin, dice, number-guessing, rock-paper-scissors and safe arithmetic; the listed Unicode text-styling commands; time, weather, password generation, QR-code images; and selected group metadata, messaging, and moderation actions. Group changes check caller and bot admin rights where required.
 
 The full requested inventory is searchable in **Command library**. Entries are labeled `ACTIVE`, `NEEDS SETUP`, or `NOT BUILT`, based on real handlers and the provider keys currently configured on the server. The remainder of the extensive download, compiler, anti-abuse, automation, owner, sports, media, GFX, and other moderation set is **not implemented** and is never presented as working.
@@ -41,7 +43,7 @@ Command replies include a clickable official WhatsApp Channel URL when `WHATSAPP
    openssl rand -hex 32   # use a different result for SESSION_ENCRYPTION_KEY
    ```
 
-   Set `DATABASE_URL`, `JWT_SECRET`, `SESSION_ENCRYPTION_KEY`, `WEB_ORIGIN`, and a verified `OWNER_EMAIL` in `.env`. Set `PGSSL=true` when your managed PostgreSQL/Supabase connection requires TLS. Set `OWNER_NUMBER`, `WHATSAPP_CHANNEL_URL`, and provider keys only to real values. `WHATSAPP_CHANNEL_URL` must be HTTPS. Do not put server keys in frontend environment variables.
+   Set `DATABASE_URL`, `JWT_SECRET`, `SESSION_ENCRYPTION_KEY`, `WEB_ORIGIN`, and a verified `OWNER_EMAIL` in `.env`. For Google sign-in, set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY` to your Supabase project URL and public anon/publishable key. Set `PGSSL=true` when your managed PostgreSQL/Supabase connection requires TLS. Set `OWNER_NUMBER`, `WHATSAPP_CHANNEL_URL`, and provider keys only to real values. `WHATSAPP_CHANNEL_URL` must be HTTPS. Never put a Supabase service-role key or other server secret in frontend environment variables.
 
 3. Install and initialize the database:
 
@@ -102,7 +104,7 @@ Deploy from the repository using the included `Dockerfile`. Attach a PostgreSQL 
 
 ### Render
 
-Use a Node web service with build command `npm install && npm run build` and start command `npm start`, plus a PostgreSQL database. Attach a persistent disk at `/var/data` and set `SESSION_DIR=/var/data/sessions`. Set `DATABASE_URL`, long random secrets, `NODE_ENV=production`, the exact public `WEB_ORIGIN`, `TRUST_PROXY=1` when directly behind the platform's single trusted proxy, and provider/channel values. Render's ephemeral filesystem is **not** suitable for WhatsApp session storage. Provision the owner through a one-off shell after the database is ready.
+Use a Node web service with build command `npm install && npm run build` and start command `npm start`, plus a PostgreSQL database. Attach a persistent disk at `/var/data` and set `SESSION_DIR=/var/data/sessions`. Set `DATABASE_URL`, long random secrets, `NODE_ENV=production`, the exact public `WEB_ORIGIN`, `TRUST_PROXY=1` when directly behind the platform's single trusted proxy, and provider/channel values. For Google sign-in, set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY` on Render; the `VITE_` values must be present at build time. Render's ephemeral filesystem is **not** suitable for WhatsApp session storage. Provision the owner through a one-off shell after the database is ready.
 
 ### VPS
 
