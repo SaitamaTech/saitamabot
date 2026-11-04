@@ -171,6 +171,7 @@ function WhatsAppPage({ data, integrations, onRefresh, pairCode, clearPairCode }
   const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const pairingActionRevision = useRef(0);
   const status = data?.session?.status || 'disconnected';
   const connected = status === 'connected';
   const pairing = status === 'pairing' || status === 'connecting';
@@ -184,18 +185,25 @@ function WhatsAppPage({ data, integrations, onRefresh, pairCode, clearPairCode }
     return () => window.removeEventListener('saitama-clear-pairing-code', clear);
   }, []);
   useEffect(() => {
+    const revision = pairingActionRevision.current;
+    let active = true;
     api('/api/whatsapp/status')
-      .then(result => { if (result.pairingCode) setCode(result.pairingCode); })
+      .then(result => {
+        if (active && pairingActionRevision.current === revision && result.pairingCode) {
+          setCode(current => current || result.pairingCode);
+        }
+      })
       .catch(e => setError(e.message));
+    return () => { active = false; };
   }, []);
   const requestCode = async (event) => {
-    event.preventDefault(); setError(''); setNotice(''); setCode(''); clearPairCode(); setBusy(true);
+    event.preventDefault(); pairingActionRevision.current += 1; setError(''); setNotice(''); setCode(''); clearPairCode(); setBusy(true);
     try { await api('/api/whatsapp/pair',{method:'POST',body:JSON.stringify({phone})}); setNotice('Pairing request started. Waiting for a code from WhatsApp…'); await onRefresh(); }
     catch(e){setError(e.message);}
     finally{setBusy(false);}
   };
   const refreshCode = async () => {
-    setError(''); setNotice(''); setCode(''); setRefreshBusy(true);
+    pairingActionRevision.current += 1; setError(''); setNotice(''); setCode(''); clearPairCode(); setRefreshBusy(true);
     try {
       await api('/api/whatsapp/pair/refresh',{method:'POST',body:'{}'});
       setNotice('A new code was requested. Enter it as soon as it appears.');
@@ -203,7 +211,10 @@ function WhatsAppPage({ data, integrations, onRefresh, pairCode, clearPairCode }
     finally { setRefreshBusy(false); }
   };
   const disconnect = async () => {
-    if(!window.confirm('Disconnect WhatsApp and permanently delete this encrypted session from this server?'))return;
+    const confirmation = connected
+      ? 'Disconnect WhatsApp and permanently delete this encrypted session from this server?'
+      : 'Cancel pairing and remove the incomplete WhatsApp session?';
+    if(!window.confirm(confirmation))return;
     setDisconnectBusy(true);setError('');
     try {await api('/api/whatsapp/disconnect',{method:'POST',body:'{}'});setCode('');clearPairCode();setNotice('Session disconnected and deleted.');await onRefresh();}
     catch(e){setError(e.message);}
@@ -221,6 +232,7 @@ function WhatsAppPage({ data, integrations, onRefresh, pairCode, clearPairCode }
         {code&&<div className="pair-code"><div><span className="panel-kicker">YOUR ONE-TIME CODE</span><small>Enter it in WhatsApp. Do not share it.</small></div><div className="code-display">{code.match(/.{1,4}/g)?.join(' ')}</div>{pairingInterrupted&&<div className="form-error"><ShieldAlert size={15}/> The connection closed after this code was issued. It may no longer work; try it now, and request a fresh code if WhatsApp rejects it.</div>}<div className="pair-code-actions"><button className="button button-secondary copy-button" onClick={copyCode}>{copied?<Check size={14}/>:<Copy size={14}/>} {copied?'Copied':'Copy code'}</button><button className="button button-secondary copy-button" onClick={refreshCode} disabled={refreshBusy||!pairing}>{refreshBusy?<><span className="spinner"/> Requesting</>:<><Radio size={14}/> Get a new code</>}</button></div></div>}
         <div className="pair-status"><span className={pairing?'pulse':'status-static'}><CircleDashed size={15}/></span><div><b>{connected?'Device connected':pairing?'Waiting for WhatsApp':pairingInterrupted?'Connection closed':'Ready when you are'}</b><small>{connected?'Your account is linked.':pairing?'Keep this page open while entering the code.':pairingInterrupted?'The last code is still shown above. Request a fresh code if WhatsApp rejects it.':'Your session will appear here when connected.'}</small></div><span className="pair-live"><i/> LIVE STATUS</span></div>
         {connected&&<div className="danger-zone"><div><b>Disconnect this account</b><small>Revokes and deletes this server-side session.</small></div><button disabled={disconnectBusy} className="button button-danger" onClick={disconnect}>{disconnectBusy?'Disconnecting…':'Disconnect & delete'}</button></div>}
+        {!connected&&(pairing||pairingInterrupted)&&<div className="danger-zone"><div><b>Cancel pairing</b><small>Closes this pairing attempt and removes its pending credentials.</small></div><button disabled={disconnectBusy} className="button button-danger" onClick={disconnect}>{disconnectBusy?'Cancelling…':'Cancel pairing'}</button></div>}
         {!connected&&data?.session?.status==='disconnected'&&data?.session?.phone&&<div className="danger-zone"><div><b>Saved session metadata</b><small>Phone ending in {data.session.phone.slice(-4)} · Session not active.</small></div><button className="button button-danger" onClick={disconnect}>Delete session</button></div>}
       </section>
       <section className="panel instructions-panel"><div className="panel-heading"><div><div className="panel-kicker">STEP 02 — LINK</div><h2>Enter the code</h2></div><Smartphone size={20} className="muted-icon" /></div><div className="instruction-steps"><div className="instruction-step"><span>1</span><div><b>Open WhatsApp</b><small>On the phone you want to link.</small></div></div><div className="instruction-step"><span>2</span><div><b>Go to Linked Devices</b><small>WhatsApp Settings → Linked Devices.</small></div></div><div className="instruction-step"><span>3</span><div><b>Choose “Link a Device”</b><small>Tap “Link with phone number instead”.</small></div></div><div className="instruction-step"><span>4</span><div><b>Enter your pairing code</b><small>Return here to see the code and live status.</small></div></div></div><div className="instruction-foot"><LockKeyhole size={15}/><p>Codes are sent only to your signed-in browser session. Authentication keys are AES-256-GCM encrypted on the server.</p></div></section>

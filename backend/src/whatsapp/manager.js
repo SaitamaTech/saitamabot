@@ -9,11 +9,33 @@ import { processIncomingMessage } from '../commands/handlers.js';
 
 const asBaileysValue = (value) => JSON.parse(JSON.stringify(value), BufferJSON.reviver);
 const asSerializable = (value) => JSON.parse(JSON.stringify(value, BufferJSON.replacer));
+const safeDiagnosticText = (value) => String(value || '')
+  .replace(/\b\d{7,15}\b/g, '[REDACTED]')
+  .replace(/\b[A-Z0-9]{8}\b/g, '[REDACTED]')
+  .slice(0, 200);
+
+function disconnectDiagnostics(error, webSocketClose, webSocketError) {
+  const message = safeDiagnosticText(error?.message);
+  const closeReason = safeDiagnosticText(webSocketClose?.reason);
+  const socketError = safeDiagnosticText(webSocketError?.message);
+  return {
+    statusCode: error?.output?.statusCode,
+    errorName: error?.name,
+    errorMessage: message || undefined,
+    errorCode: error?.data?.code || error?.cause?.code || undefined,
+    webSocketCode: webSocketClose?.code,
+    webSocketReason: closeReason || undefined,
+    webSocketError: socketError || undefined,
+    webSocketErrorCode: webSocketError?.code,
+  };
+}
 
 export class WhatsAppManager {
-  constructor(io) {
+  constructor(io, { socketFactory = makeWASocket } = {}) {
     this.io = io;
+    this.socketFactory = socketFactory;
     this.connections = new Map();
+    this.connectionStarts = new Map();
     this.reconnectTimers = new Map();
     this.stopping = false;
   }
@@ -57,45 +79,97 @@ export class WhatsAppManager {
     };
     let writeQueue = Promise.resolve();
     const persist = () => {
-      writeQueue = writeQueue.then(async () => {
+      writeQueue = writeQueue.catch(() => {}).then(async () => {
         const envelope = encryptJson({ creds: asSerializable(creds), keys: asSerializable(data) });
         const temp = `${location}.${process.pid}.${Date.now()}.tmp`;
-        await fs.writeFile(temp, envelope, { mode: 0o600, flag: 'w' });
-        await fs.rename(temp, location);
-        await fs.chmod(location, 0o600).catch(() => {});
+        try {
+          await fs.writeFile(temp, envelope, { mode: 0o600, flag: 'w' });
+          await fs.rename(temp, location);
+          await fs.chmod(location, 0o600).catch(() => {});
+        } catch (error) {
+          await fs.unlink(temp).catch(() => {});
+          throw error;
+        }
       });
       return writeQueue;
     };
     return { state: { creds, keys }, saveCreds: persist, authFile: location };
   }
 
-  async connect(userId, phone, { restoring = false } = {}) {
+  async connect(userId, phone, options = {}) {
+    const pending = this.connectionStarts.get(userId);
+    if (pending) {
+      if (pending.phone !== (phone || null)) {
+        throw new Error('A WhatsApp connection is already starting. Wait for it to finish before changing the phone number.');
+      }
+      return pending.promise;
+    }
+
+    const entry = {
+      phone: phone || null,
+      promise: Promise.resolve().then(() => this.startConnection(userId, phone, options)),
+    };
+    this.connectionStarts.set(userId, entry);
+    try {
+      return await entry.promise;
+    } finally {
+      if (this.connectionStarts.get(userId) === entry) this.connectionStarts.delete(userId);
+    }
+  }
+
+  async startConnection(userId, phone, { restoring = false } = {}) {
     if (this.stopping) throw new Error('Service is shutting down.');
     if (!getEncryptionKey()) throw new Error('Secure WhatsApp pairing is unavailable: set SESSION_ENCRYPTION_KEY to a 32-byte key (64 hex characters).');
+    const normalizedPhone = String(phone || '').replace(/^\+/, '');
+    if (phone && !/^[1-9]\d{6,14}$/.test(normalizedPhone)) {
+      throw new Error('Use an international phone number with country code (7–15 digits).');
+    }
     const current = this.connections.get(userId);
     if (current && ['connecting','connected'].includes(current.status)) return { status: current.status };
-    if (current?.status === 'pairing' && phone && current.phone !== phone) {
+    if (current?.status === 'pairing' && phone && current.phone !== normalizedPhone) {
       current.closed=true;
       this.connections.delete(userId);
       try { current.sock?.end(undefined); } catch {}
-      await fs.unlink(current.auth.authFile).catch(()=>{});
+      await current.auth.saveCreds().catch((error) => {
+        logger.error('Could not flush credentials for replaced pairing', { userId, reason: error.message });
+      });
+      if (!current.registered) await fs.unlink(current.auth.authFile).catch(()=>{});
     } else if (current?.status === 'pairing') {
       return { status: 'pairing' };
     }
     clearTimeout(this.reconnectTimers.get(userId));
     this.reconnectTimers.delete(userId);
     const row = await getPool().query('SELECT phone,status FROM whatsapp_sessions WHERE user_id=$1', [userId]);
-    const storedPhone = phone || row.rows[0]?.phone;
+    const storedPhone = normalizedPhone || row.rows[0]?.phone;
     if (!storedPhone) throw new Error('A phone number is required for first-time pairing.');
-    const auth = await this.loadAuth(userId);
+    let auth = await this.loadAuth(userId);
+    if (!auth.state.creds.registered && (auth.state.creds.me || auth.state.creds.pairingCode)) {
+      await fs.unlink(auth.authFile).catch((error) => {
+        if (error.code !== 'ENOENT') throw error;
+      });
+      auth = await this.loadAuth(userId);
+    }
     if (restoring && row.rows[0]?.status === 'connected' && !auth.state.creds.registered) throw new Error('A connected session has no authenticated credentials to restore.');
-    const session = { userId, phone: storedPhone, status: auth.state.creds.registered ? 'connecting' : 'pairing', sock: null, auth, attempts: 0, registered: Boolean(auth.state.creds.registered), closed: false, pairingCode: null };
+    const session = {
+      userId,
+      phone: storedPhone,
+      status: auth.state.creds.registered ? 'connecting' : 'pairing',
+      sock: null,
+      auth,
+      attempts: 0,
+      registered: Boolean(auth.state.creds.registered),
+      closed: false,
+      pairingCode: null,
+      pairingRequest: null,
+      webSocketClose: null,
+    };
     this.connections.set(userId, session);
-    await getPool().query('UPDATE whatsapp_sessions SET phone=$2,status=$3,last_disconnect=NULL,updated_at=now() WHERE user_id=$1', [userId, storedPhone, session.status]);
-    this.notify(userId, session.status);
 
     try {
-      const sock = makeWASocket({
+      await getPool().query('UPDATE whatsapp_sessions SET phone=$2,status=$3,last_disconnect=NULL,updated_at=now() WHERE user_id=$1', [userId, storedPhone, session.status]);
+      if (this.stopping) throw new Error('Service is shutting down.');
+      this.notify(userId, session.status);
+      const sock = this.socketFactory({
         auth: auth.state,
         printQRInTerminal: false,
         logger: pino({ level: 'silent' }),
@@ -108,12 +182,28 @@ export class WhatsAppManager {
         defaultQueryTimeoutMs: 30_000,
       });
       session.sock = sock;
+      sock.ws.on('close', (code, reason) => {
+        session.webSocketClose = {
+          code,
+          reason: Buffer.isBuffer(reason) ? reason.toString('utf8') : String(reason || ''),
+        };
+      });
+      sock.ws.on('error', (error) => {
+        session.webSocketError = {
+          name: error?.name,
+          message: safeDiagnosticText(error?.message),
+          code: error?.code,
+        };
+      });
       sock.ev.on('creds.update', async () => {
-        try { await auth.saveCreds(); session.registered = Boolean(auth.state.creds.registered); }
-        catch (error) { logger.error('Encrypted WhatsApp credential persistence failed', { userId, reason: error.name }); }
+        if (this.connections.get(userId) !== session || session.closed) return;
+        session.registered = Boolean(auth.state.creds.registered);
+        try { await auth.saveCreds(); }
+        catch (error) { logger.error('Encrypted WhatsApp credential persistence failed', { userId, reason: error.message }); }
       });
       sock.ev.on('connection.update', async (update) => {
         if (this.connections.get(userId) !== session) return;
+        if (update.qr) logger.info('WhatsApp pairing handshake ready', { userId });
         if (update.connection === 'open') {
           session.status = 'connected'; session.registered = true; session.pairingCode = null; session.attempts = 0;
           const number = sock.user?.id?.split(':')[0]?.split('@')[0] || session.phone;
@@ -132,29 +222,32 @@ export class WhatsAppManager {
         }
       });
 
-      if (!session.registered) this.requestCode(session).catch((error) => {
-        logger.warn('WhatsApp pairing code request failed', {
-          userId,
-          reason: error.message,
-          statusCode: error.output?.statusCode,
-        });
-        session.status = 'error';
-        session.closed = true;
-        this.connections.delete(userId);
-        try { sock.end(undefined); } catch {}
-        getPool().query('UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1', [userId, 'error', 'Pairing code could not be requested.']).catch(()=>{});
-        this.notify(userId, 'error', { message: 'Could not request a pairing code. Check the number and try again.' });
-      });
+      if (!session.registered) this.requestCode(session).catch((error) => this.failPairing(session, error));
       return { status: session.status };
     } catch (error) {
-      this.connections.delete(userId);
+      if (this.connections.get(userId) === session) this.connections.delete(userId);
+      session.closed = true;
+      try { session.sock?.end(undefined); } catch {}
+      await auth.saveCreds().catch((saveError) => {
+        logger.error('Could not flush WhatsApp credentials after connection setup failed', { userId, reason: saveError.message });
+      });
       await getPool().query('UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1', [userId, 'error', 'Connection initialization failed.']).catch(()=>{});
       this.notify(userId, 'error', { message: 'WhatsApp connection could not be initialized.' });
       throw error;
     }
   }
 
-  async requestCode(session) {
+  requestCode(session, { replace = false } = {}) {
+    if (session.pairingRequest) return session.pairingRequest;
+    if (session.pairingCode && !replace) return Promise.resolve(session.pairingCode);
+    const request = this.performCodeRequest(session);
+    session.pairingRequest = request;
+    return request.finally(() => {
+      if (session.pairingRequest === request) session.pairingRequest = null;
+    });
+  }
+
+  async performCodeRequest(session) {
     let resolveReady;
     let rejectReady;
     const pairingReady = new Promise((resolve, reject) => {
@@ -178,24 +271,15 @@ export class WhatsAppManager {
       session.sock.ev.off('connection.update', onUpdate);
     }
     if (this.connections.get(session.userId)!==session || session.closed) return;
-    let lastError;
-    for (let attempt=0; attempt<4; attempt++) {
-      if (this.connections.get(session.userId)!==session || session.closed) return;
-      try {
-        const code = await session.sock.requestPairingCode(session.phone);
-        if (this.connections.get(session.userId)!==session || session.closed) return;
-        session.pairingCode = code;
-        this.io.to(`user:${session.userId}`).emit('pairing:code', { code });
-        session.status = 'pairing';
-        await getPool().query('UPDATE whatsapp_sessions SET status=$2,updated_at=now() WHERE user_id=$1', [session.userId, 'pairing']).catch(()=>{});
-        this.notify(session.userId, 'pairing');
-        return;
-      } catch(error) {
-        lastError=error;
-        if(attempt<3) await new Promise(resolve=>setTimeout(resolve,750*(attempt+1)));
-      }
-    }
-    throw lastError || new Error('Pairing code request failed.');
+    const code = await session.sock.requestPairingCode(session.phone);
+    if (this.connections.get(session.userId)!==session || session.closed) return;
+    session.pairingCode = code;
+    await session.auth.saveCreds();
+    this.io.to(`user:${session.userId}`).emit('pairing:code', { code });
+    session.status = 'pairing';
+    await getPool().query('UPDATE whatsapp_sessions SET status=$2,updated_at=now() WHERE user_id=$1', [session.userId, 'pairing']).catch(()=>{});
+    this.notify(session.userId, 'pairing');
+    logger.info('WhatsApp pairing code issued', { userId: session.userId });
   }
 
   getPairingCode(userId) {
@@ -210,48 +294,70 @@ export class WhatsAppManager {
     }
 
     try {
-      await this.requestCode(session);
+      await this.requestCode(session, { replace: true });
     } catch (error) {
-      logger.warn('WhatsApp pairing code refresh failed', { userId, reason: error.name });
-      session.status = 'error';
-      session.closed = true;
-      this.connections.delete(userId);
-      try { session.sock?.end(undefined); } catch {}
-      await getPool().query(
-        'UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1',
-        [userId,'error','Pairing code could not be refreshed.'],
-      ).catch(()=>{});
-      this.notify(userId,'error',{message:'Could not refresh the pairing code. Check the number and try again.'});
-      throw new Error('Could not refresh the pairing code. Check the number and try again.');
+      await this.failPairing(session, error);
+      throw new Error('Could not refresh the pairing code. The connection was closed; start a fresh pairing attempt.');
     }
+  }
+
+  async failPairing(session, error) {
+    if (session.closed || this.connections.get(session.userId) !== session) return;
+    session.closed = true;
+    session.status = 'error';
+    this.connections.delete(session.userId);
+    try { session.sock?.end(undefined); } catch {}
+    await session.auth.saveCreds().catch((saveError) => {
+      logger.error('Could not flush credentials after pairing failure', { userId: session.userId, reason: saveError.message });
+    });
+    if (!session.registered) await fs.unlink(session.auth.authFile).catch((unlinkError) => {
+      if (unlinkError.code !== 'ENOENT') logger.error('Could not remove incomplete WhatsApp pairing credentials', { userId: session.userId, reason: unlinkError.message });
+    });
+    const details = disconnectDiagnostics(error, session.webSocketClose, session.webSocketError);
+    const reason = safeDiagnosticText(error?.message) || 'Unknown connection error';
+    await getPool().query(
+      'UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1',
+      [session.userId, 'error', `Pairing failed: ${reason}${details.statusCode ? ` (status ${details.statusCode})` : ''}.`],
+    ).catch(()=>{});
+    logger.warn('WhatsApp pairing attempt failed', { userId: session.userId, ...details });
+    this.notify(session.userId, 'error', {
+      message: `WhatsApp pairing failed${details.statusCode ? ` (status ${details.statusCode})` : ''}: ${reason}. Start a fresh pairing attempt.`,
+    });
   }
 
   async handleClose(session, error) {
     if (session.closed || this.connections.get(session.userId) !== session) return;
     session.closed = true;
-    session.pairingCode = null;
     const userId = session.userId;
     const statusCode = error?.output?.statusCode;
     const loggedOut = statusCode === DisconnectReason.loggedOut;
+    const details = disconnectDiagnostics(error, session.webSocketClose, session.webSocketError);
+    const reason = safeDiagnosticText(error?.message);
     const description = loggedOut
       ? 'WhatsApp logged out this linked device.'
-      : `WhatsApp connection closed${statusCode ? ` (status ${statusCode})` : ''}.`;
+      : `WhatsApp connection closed${statusCode ? ` (status ${statusCode})` : ''}${reason ? `: ${reason}` : '.'}`;
     this.connections.delete(userId);
     session.status = loggedOut ? 'logged_out' : 'disconnected';
+    await session.auth.saveCreds().catch((saveError) => {
+      logger.error('Could not flush credentials after WhatsApp disconnect', { userId, reason: saveError.message });
+    });
     await getPool().query('UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1', [userId, session.status, description]).catch(()=>{});
     this.notify(userId, session.status, { message: description });
-    logger.warn('WhatsApp session disconnected', { userId, statusCode: statusCode || 'unknown' });
+    logger.warn('WhatsApp session disconnected', { userId, ...details });
     if (loggedOut) {
       await fs.unlink(session.auth.authFile).catch(()=>{});
       return;
     }
     if (this.stopping) return;
     if (!session.registered) {
+      await fs.unlink(session.auth.authFile).catch((unlinkError) => {
+        if (unlinkError.code !== 'ENOENT') logger.error('Could not remove incomplete WhatsApp pairing credentials', { userId, reason: unlinkError.message });
+      });
       await getPool().query(
         'UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1',
         [userId,'error',`WhatsApp closed the connection before pairing completed${statusCode ? ` (status ${statusCode})` : ''}.`],
       ).catch(()=>{});
-      this.notify(userId,'error',{message:`WhatsApp closed the pairing connection${statusCode ? ` (status ${statusCode})` : ''}. Check the server logs, then request a new code.`});
+      this.notify(userId,'error',{message:`WhatsApp closed the pairing connection${statusCode ? ` (status ${statusCode})` : ''}${reason ? `: ${reason}` : ''}. Start a fresh pairing attempt.`});
       return;
     }
     const next = Math.min(60_000, 1000 * (2 ** Math.min(session.attempts++, 6)));
@@ -267,7 +373,12 @@ export class WhatsAppManager {
     this.connections.delete(userId);
     if (session) {
       session.closed = true;
-      try { await session.sock.logout(); } catch { try { session.sock.end(undefined); } catch {} }
+      try {
+        if (session.registered) await session.sock.logout();
+        else session.sock.end(undefined);
+      } catch {
+        try { session.sock.end(undefined); } catch {}
+      }
     }
     await fs.unlink(this.filePath(userId)).catch(()=>{});
     await getPool().query('UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1', [userId, 'disconnected', 'Session deleted by account owner.']);
@@ -306,10 +417,17 @@ export class WhatsAppManager {
   async shutdown() {
     this.stopping = true;
     for (const timer of this.reconnectTimers.values()) clearTimeout(timer);
-    for (const session of this.connections.values()) {
+    await Promise.all([...this.connectionStarts.values()].map((entry) => entry.promise.catch((error) => {
+      logger.warn('WhatsApp connection start stopped during shutdown', { reason: error.message });
+    })));
+    const sessions = [...this.connections.values()];
+    for (const session of sessions) {
       session.closed = true;
       try { session.sock.end(undefined); } catch {}
     }
     this.connections.clear();
+    await Promise.all(sessions.map((session) => session.auth.saveCreds().catch((error) => {
+      logger.error('Could not flush WhatsApp credentials during shutdown', { userId: session.userId, reason: error.message });
+    })));
   }
 }
