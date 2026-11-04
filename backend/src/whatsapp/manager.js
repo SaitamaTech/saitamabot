@@ -379,6 +379,9 @@ export class WhatsAppManager {
       } catch {
         try { session.sock.end(undefined); } catch {}
       }
+      await session.auth.saveCreds().catch((error) => {
+        logger.error('Could not flush WhatsApp credentials before session deletion', { userId, reason: error.message });
+      });
     }
     await fs.unlink(this.filePath(userId)).catch(()=>{});
     await getPool().query('UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1', [userId, 'disconnected', 'Session deleted by account owner.']);
