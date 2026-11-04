@@ -156,6 +156,7 @@ export class WhatsAppManager {
       if (this.connections.get(session.userId)!==session || session.closed) return;
       try {
         const code = await session.sock.requestPairingCode(session.phone);
+        if (this.connections.get(session.userId)!==session || session.closed) return;
         session.pairingCode = code;
         this.io.to(`user:${session.userId}`).emit('pairing:code', { code });
         session.status = 'pairing';
@@ -216,6 +217,14 @@ export class WhatsAppManager {
       return;
     }
     if (this.stopping) return;
+    if (!session.registered) {
+      await getPool().query(
+        'UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1',
+        [userId,'error','WhatsApp closed the connection before pairing completed.'],
+      ).catch(()=>{});
+      this.notify(userId,'error',{message:'WhatsApp closed the pairing connection. Generate a new code to try again.'});
+      return;
+    }
     const next = Math.min(60_000, 1000 * (2 ** Math.min(session.attempts++, 6)));
     const timer = setTimeout(() => this.connect(userId, session.phone, { restoring: true }).catch(() => {}), next);
     timer.unref?.();
@@ -247,7 +256,13 @@ export class WhatsAppManager {
       logger.warn('WhatsApp reconnection disabled because SESSION_ENCRYPTION_KEY is missing or invalid');
       return;
     }
-    const result = await getPool().query("SELECT user_id,phone FROM whatsapp_sessions WHERE status IN ('connected','connecting','pairing') AND phone IS NOT NULL");
+    const pending = await getPool().query(
+      "UPDATE whatsapp_sessions SET status='error',last_disconnect='Pairing was interrupted by a server restart. Request a new code.',updated_at=now() WHERE status='pairing' RETURNING user_id",
+    );
+    if (pending.rowCount) {
+      logger.info('Interrupted pending WhatsApp pairings after server restart', { count: pending.rowCount });
+    }
+    const result = await getPool().query("SELECT user_id,phone FROM whatsapp_sessions WHERE status IN ('connected','connecting') AND phone IS NOT NULL");
     for (const row of result.rows) {
       try { await this.connect(row.user_id, row.phone, { restoring: true }); }
       catch(error) {

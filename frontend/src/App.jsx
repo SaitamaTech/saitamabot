@@ -171,7 +171,10 @@ function WhatsAppPage({ data, integrations, onRefresh, pairCode }) {
   const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
-  useEffect(() => { if (pairCode) setCode(pairCode); }, [pairCode]);
+  useEffect(() => {
+    if (pairCode) setCode(pairCode);
+    else if (!pairing) setCode('');
+  }, [pairCode, pairing]);
   useEffect(() => {
     api('/api/whatsapp/status')
       .then(result => { if (result.pairingCode) setCode(result.pairingCode); })
@@ -312,7 +315,7 @@ export default function App() {
   useEffect(()=>{
     if(!user)return;
     const socket=io({withCredentials:true,transports:['websocket','polling']});
-    socket.on('connection:status',event=>{setData(previous=>previous?{...previous,session:{...previous.session,status:event.status,...(event.phone?{phone:event.phone}:{}),...(event.message?{last_disconnect:event.message}:{})}}:previous);if(event.message)setToast(event.message);});
+    socket.on('connection:status',event=>{setData(previous=>previous?{...previous,session:{...previous.session,status:event.status,...(event.phone?{phone:event.phone}:{}),...(event.message?{last_disconnect:event.message}:{})}}:previous);if(!['pairing','connecting'].includes(event.status))setPairCode('');if(event.message)setToast(event.message);});
     socket.on('pairing:code',event=>{window.dispatchEvent(new CustomEvent('saitama-pairing-code',{detail:event.code}));setToast('Pairing code received.');});
     socket.on('command:activity',()=>refresh().catch(()=>{}));
     return()=>socket.disconnect();
