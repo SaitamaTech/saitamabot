@@ -131,9 +131,16 @@ test('simultaneous connect calls create only one WhatsApp socket', async (t) => 
   });
 
   let sockets = 0;
+  let versionFetches = 0;
+  let socketOptions;
   const manager = new WhatsAppManager({ to: () => ({ emit() {} }) }, {
-    socketFactory: () => {
+    versionFetcher: async () => {
+      versionFetches += 1;
+      return { version: [2, 3000, 123], isLatest: true };
+    },
+    socketFactory: (options) => {
       sockets += 1;
+      socketOptions = options;
       const ev = new EventEmitter();
       return {
         ev,
@@ -158,6 +165,8 @@ test('simultaneous connect calls create only one WhatsApp socket', async (t) => 
 
   assert.deepEqual(results, [{ status: 'pairing' }, { status: 'pairing' }]);
   assert.equal(sockets, 1);
+  assert.equal(versionFetches, 1);
+  assert.deepEqual(socketOptions.version, [2, 3000, 123]);
   assert.equal(manager.getPairingCode('user-4'), 'ONE-SOCKET');
   await manager.shutdown();
 });
@@ -177,6 +186,7 @@ test('new pairing resets unregistered credentials left by an interrupted attempt
   let authLoads = 0;
   let socketCreds;
   const manager = new WhatsAppManager({ to: () => ({ emit() {} }) }, {
+    versionFetcher: async () => ({ version: [2, 3000, 123], isLatest: true }),
     socketFactory: (options) => {
       socketCreds = options.auth.creds;
       const ev = new EventEmitter();
@@ -205,6 +215,20 @@ test('new pairing resets unregistered credentials left by an interrupted attempt
   assert.equal(socketCreds.me, undefined);
   assert.equal(manager.getPairingCode('user-7'), 'FRESH-CODE');
   await manager.shutdown();
+});
+
+test('bundled protocol version is used when the latest-version lookup fails', async () => {
+  let fetches = 0;
+  const manager = new WhatsAppManager({ to: () => ({ emit() {} }) }, {
+    versionFetcher: async () => {
+      fetches += 1;
+      return { version: [2, 3000, 1023223821], isLatest: false, error: new Error('offline') };
+    },
+  });
+
+  assert.deepEqual(await manager.getProtocolVersion(), [2, 3000, 1023223821]);
+  assert.deepEqual(await manager.getProtocolVersion(), [2, 3000, 1023223821]);
+  assert.equal(fetches, 1);
 });
 
 test('failed unregistered pairing removes incomplete auth but preserves registered auth', async (t) => {
@@ -241,4 +265,33 @@ test('failed unregistered pairing removes incomplete auth but preserves register
   manager.connections.set(registered.userId, registered);
   await manager.handleClose(registered, { message: 'Connection Terminated', output: { statusCode: 428 } });
   assert.equal(await fs.readFile(registeredAuthFile, 'utf8'), 'valid');
+});
+
+test('protocol rejection details are included in pairing disconnect notifications', async (t) => {
+  await mockDatabase(t);
+  const notifications = [];
+  const manager = new WhatsAppManager({
+    to: () => ({ emit: (event, payload) => notifications.push({ event, payload }) }),
+  });
+  const session = {
+    userId: 'user-8',
+    phone: '15551234567',
+    status: 'pairing',
+    registered: false,
+    closed: false,
+    auth: { authFile: 'unused', saveCreds: async () => {} },
+    sock: { end() {} },
+  };
+  manager.connections.set(session.userId, session);
+
+  await manager.handleClose(session, {
+    message: 'Connection Failure',
+    output: { statusCode: 405 },
+    data: { reason: '405', location: 'frc' },
+  });
+
+  assert.ok(notifications.some(({ event, payload }) =>
+    event === 'connection:status' && payload.status === 'error' &&
+    payload.message.includes('status 405') && payload.message.includes('protocol reason 405') &&
+    payload.message.includes('location frc')));
 });

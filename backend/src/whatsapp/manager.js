@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import pino from 'pino';
-import makeWASocket, { BufferJSON, Browsers, DisconnectReason, initAuthCreds, proto } from '@whiskeysockets/baileys';
+import makeWASocket, { BufferJSON, Browsers, DisconnectReason, fetchLatestBaileysVersion, initAuthCreds, proto } from '@whiskeysockets/baileys';
 import { appConfig, decryptJson, encryptJson, getEncryptionKey } from '../config.js';
 import { getPool } from '../db.js';
 import { logger } from '../logger.js';
@@ -18,11 +18,15 @@ function disconnectDiagnostics(error, webSocketClose, webSocketError) {
   const message = safeDiagnosticText(error?.message);
   const closeReason = safeDiagnosticText(webSocketClose?.reason);
   const socketError = safeDiagnosticText(webSocketError?.message);
+  const protocolReason = safeDiagnosticText(error?.data?.reason);
+  const protocolLocation = safeDiagnosticText(error?.data?.location);
   return {
     statusCode: error?.output?.statusCode,
     errorName: error?.name,
     errorMessage: message || undefined,
     errorCode: error?.data?.code || error?.cause?.code || undefined,
+    protocolReason: protocolReason || undefined,
+    protocolLocation: protocolLocation || undefined,
     webSocketCode: webSocketClose?.code,
     webSocketReason: closeReason || undefined,
     webSocketError: socketError || undefined,
@@ -31,9 +35,12 @@ function disconnectDiagnostics(error, webSocketClose, webSocketError) {
 }
 
 export class WhatsAppManager {
-  constructor(io, { socketFactory = makeWASocket } = {}) {
+  constructor(io, { socketFactory = makeWASocket, versionFetcher = fetchLatestBaileysVersion } = {}) {
     this.io = io;
     this.socketFactory = socketFactory;
+    this.versionFetcher = versionFetcher;
+    this.protocolVersionCache = null;
+    this.protocolVersionPromise = null;
     this.connections = new Map();
     this.connectionStarts = new Map();
     this.reconnectTimers = new Map();
@@ -45,6 +52,31 @@ export class WhatsAppManager {
   }
 
   filePath(userId) { return path.join(appConfig.sessionDir, `${userId}.enc`); }
+
+  getProtocolVersion() {
+    if (this.protocolVersionCache && this.protocolVersionCache.expiresAt > Date.now()) {
+      return Promise.resolve(this.protocolVersionCache.version);
+    }
+    if (!this.protocolVersionPromise) {
+      const pending = this.versionFetcher({ timeout: 5_000 }).then((result) => {
+        const isLatest = Boolean(result.isLatest);
+        const message = isLatest
+          ? 'Using current WhatsApp Web protocol version'
+          : 'Could not fetch current WhatsApp Web protocol version; using Baileys bundled fallback';
+        const details = isLatest ? { version: result.version } : { reason: result.error?.message };
+        (isLatest ? logger.info : logger.warn)(message, details);
+        this.protocolVersionCache = {
+          version: result.version,
+          expiresAt: Date.now() + (isLatest ? 60 * 60_000 : 60_000),
+        };
+        return result.version;
+      }).finally(() => {
+        this.protocolVersionPromise = null;
+      });
+      this.protocolVersionPromise = pending;
+    }
+    return this.protocolVersionPromise;
+  }
 
   async loadAuth(userId) {
     await fs.mkdir(appConfig.sessionDir, { recursive: true, mode: 0o700 });
@@ -169,8 +201,10 @@ export class WhatsAppManager {
       await getPool().query('UPDATE whatsapp_sessions SET phone=$2,status=$3,last_disconnect=NULL,updated_at=now() WHERE user_id=$1', [userId, storedPhone, session.status]);
       if (this.stopping) throw new Error('Service is shutting down.');
       this.notify(userId, session.status);
+      const version = await this.getProtocolVersion();
       const sock = this.socketFactory({
         auth: auth.state,
+        version,
         printQRInTerminal: false,
         logger: pino({ level: 'silent' }),
         browser: Browsers.ubuntu('Chrome'),
@@ -315,13 +349,17 @@ export class WhatsAppManager {
     });
     const details = disconnectDiagnostics(error, session.webSocketClose, session.webSocketError);
     const reason = safeDiagnosticText(error?.message) || 'Unknown connection error';
+    const protocolContext = [
+      details.protocolReason && `protocol reason ${details.protocolReason}`,
+      details.protocolLocation && `location ${details.protocolLocation}`,
+    ].filter(Boolean).join(', ');
     await getPool().query(
       'UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1',
-      [session.userId, 'error', `Pairing failed: ${reason}${details.statusCode ? ` (status ${details.statusCode})` : ''}.`],
+      [session.userId, 'error', `Pairing failed: ${reason}${details.statusCode ? ` (status ${details.statusCode})` : ''}${protocolContext ? `, ${protocolContext}` : ''}.`],
     ).catch(()=>{});
     logger.warn('WhatsApp pairing attempt failed', { userId: session.userId, ...details });
     this.notify(session.userId, 'error', {
-      message: `WhatsApp pairing failed${details.statusCode ? ` (status ${details.statusCode})` : ''}: ${reason}. Start a fresh pairing attempt.`,
+      message: `WhatsApp pairing failed${details.statusCode ? ` (status ${details.statusCode})` : ''}${protocolContext ? `, ${protocolContext}` : ''}: ${reason}. Start a fresh pairing attempt.`,
     });
   }
 
@@ -353,11 +391,15 @@ export class WhatsAppManager {
       await fs.unlink(session.auth.authFile).catch((unlinkError) => {
         if (unlinkError.code !== 'ENOENT') logger.error('Could not remove incomplete WhatsApp pairing credentials', { userId, reason: unlinkError.message });
       });
+      const protocolContext = [
+        details.protocolReason && `, protocol reason ${details.protocolReason}`,
+        details.protocolLocation && `, location ${details.protocolLocation}`,
+      ].filter(Boolean).join('');
       await getPool().query(
         'UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1',
-        [userId,'error',`WhatsApp closed the connection before pairing completed${statusCode ? ` (status ${statusCode})` : ''}.`],
+        [userId,'error',`WhatsApp closed the connection before pairing completed${statusCode ? ` (status ${statusCode})` : ''}${protocolContext}${reason ? `: ${reason}` : ''}.`],
       ).catch(()=>{});
-      this.notify(userId,'error',{message:`WhatsApp closed the pairing connection${statusCode ? ` (status ${statusCode})` : ''}${reason ? `: ${reason}` : ''}. Start a fresh pairing attempt.`});
+      this.notify(userId,'error',{message:`WhatsApp closed the pairing connection${statusCode ? ` (status ${statusCode})` : ''}${protocolContext}${reason ? `: ${reason}` : ''}. Start a fresh pairing attempt.`});
       return;
     }
     const next = Math.min(60_000, 1000 * (2 ** Math.min(session.attempts++, 6)));
