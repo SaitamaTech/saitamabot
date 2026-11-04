@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { proto } from '@whiskeysockets/baileys';
 import { appConfig } from '../config.js';
 import catalog from './catalog.json' with { type: 'json' };
 import { findCommandSuggestion, formatActiveCommandMenu, formatCommandUsage, formatUnknownCommand } from './catalog.js';
@@ -61,27 +62,39 @@ test('menu command uses channel context without reattaching the local wallpaper'
   });
   const sent = [];
   const newsletterLookups = [];
+  const post = proto.WebMessageInfo.encode({
+    key: { remoteJid: '120363012345678901@newsletter', id: 'newsletter-message-key', fromMe: false },
+    message: { imageMessage: { caption: 'Channel post image', mimetype: 'image/jpeg' } },
+    messageTimestamp: 1,
+  }).finish();
   const sock = {
     newsletterMetadata: async (...args) => {
       newsletterLookups.push(args);
       return { id: '120363012345678901@newsletter', name: 'Saitama Updates' };
+    },
+    newsletterFetchMessages: async (...args) => {
+      newsletterLookups.push(args);
+      return { tag: 'iq', attrs: {}, content: [{ tag: 'message', attrs: { server_id: String(appConfig.channelPostId) }, content: post }] };
     },
     sendMessage: async (jid, payload) => sent.push({ jid, payload }),
   };
   await sendCommandResponse(sock, 'menu-test@s.whatsapp.net', result.text, { channelAction: true });
 
   assert.equal(result.image, undefined);
-  assert.equal(sent.length, 1);
-  assert.deepEqual(newsletterLookups, [['invite', '0029VbEKwbnCXC3EkbjtEW0f']]);
-  assert.equal(sent[0].payload.image, undefined);
+  assert.equal(sent.length, 2);
+  assert.deepEqual(newsletterLookups, [
+    ['invite', '0029VbEKwbnCXC3EkbjtEW0f'],
+    ['120363012345678901@newsletter', 100, 0, Number(appConfig.channelPostId) - 1],
+  ]);
+  assert.equal(sent[0].payload.forward.message.imageMessage.caption, 'Channel post image');
   assert.equal(sent[0].payload.contextInfo.forwardedNewsletterMessageInfo.newsletterJid, '120363012345678901@newsletter');
   assert.equal(sent[0].payload.contextInfo.forwardedNewsletterMessageInfo.newsletterName, 'Saitama Updates');
-  assert.equal(sent[0].payload.contextInfo.forwardedNewsletterMessageInfo.serverMessageId, -1);
-  assert.match(sent[0].payload.text, /• !menu/);
-  assert.doesNotMatch(sent[0].payload.text, /https:\/\/whatsapp\.com\/channel/);
+  assert.equal(sent[0].payload.contextInfo.forwardedNewsletterMessageInfo.serverMessageId, Number(appConfig.channelPostId));
+  assert.match(sent[1].payload.text, /• !menu/);
+  assert.doesNotMatch(sent[1].payload.text, /https:\/\/whatsapp\.com\/channel/);
 });
 
-test('ordinary command replies do not attach synthetic forwarded-channel metadata', async () => {
+test('ordinary command replies do not fetch or attach channel post metadata', async () => {
   const sent = [];
   let lookups = 0;
   const sock = {
@@ -90,6 +103,10 @@ test('ordinary command replies do not attach synthetic forwarded-channel metadat
       assert.equal(type, 'invite');
       assert.equal(inviteCode, '0029VbEKwbnCXC3EkbjtEW0f');
       return { id: '120363012345678901@newsletter', name: 'Saitama Updates' };
+    },
+    newsletterFetchMessages: async () => {
+      lookups += 1;
+      throw new Error('ordinary replies must not fetch channel posts');
     },
     sendMessage: async (jid, payload) => sent.push(payload),
   };
@@ -105,16 +122,45 @@ test('ordinary command replies do not attach synthetic forwarded-channel metadat
   }
 });
 
-test('channel command requests the native channel action context', async () => {
+test('channel command forwards the configured real channel post', async () => {
+  const sent = [];
+  const post = proto.Message.encode({ conversation: 'Actual channel post' }).finish();
+  const sock = {
+    newsletterMetadata: async () => ({ id: '120363012345678901@newsletter', name: 'Saitama Updates' }),
+    newsletterFetchMessages: async () => ({
+      tag: 'iq',
+      attrs: {},
+      content: [{
+        tag: 'messages',
+        attrs: {},
+        content: [{
+          tag: 'message',
+          attrs: { message_id: 'newsletter-message-key', server_id: String(appConfig.channelPostId), t: '1' },
+          content: [{ tag: 'plaintext', attrs: {}, content: post }],
+        }],
+      }],
+    }),
+    sendMessage: async (jid, payload) => sent.push(payload),
+  };
+  await sendCommandResponse(sock, 'user@s.whatsapp.net', 'Open the official channel.', { channelAction: true });
+
+  assert.equal(sent.length, 2);
+  assert.equal(sent[0].forward.message.conversation, 'Actual channel post');
+  assert.equal(sent[0].contextInfo.forwardedNewsletterMessageInfo.serverMessageId, Number(appConfig.channelPostId));
+});
+
+test('missing channel post sends no fabricated attribution and explains the fallback', async () => {
   const sent = [];
   const sock = {
     newsletterMetadata: async () => ({ id: '120363012345678901@newsletter', name: 'Saitama Updates' }),
+    newsletterFetchMessages: async () => ({ tag: 'iq', attrs: {}, content: [] }),
     sendMessage: async (jid, payload) => sent.push(payload),
   };
   await sendCommandResponse(sock, 'user@s.whatsapp.net', 'Open the official channel.', { channelAction: true });
 
   assert.equal(sent.length, 1);
-  assert.equal(sent[0].contextInfo.forwardedNewsletterMessageInfo.newsletterJid, '120363012345678901@newsletter');
+  assert.equal(sent[0].contextInfo, undefined);
+  assert.match(sent[0].text, /𝐂𝐎𝐍𝐅𝐈𝐆𝐔𝐑𝐄𝐃 𝐂𝐇𝐀𝐍𝐍𝐄𝐋 𝐏𝐎𝐒𝐓 𝐂𝐎𝐔𝐋𝐃 𝐍𝐎𝐓 𝐁𝐄 𝐋𝐎𝐀𝐃𝐄𝐃/);
 });
 
 test('owner command shows the configured WhatsApp contact as a wa.me link', async () => {

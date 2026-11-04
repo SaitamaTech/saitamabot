@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 dotenv.config({ path: path.join(root, '.env') });
+const channelUrl = process.env.WHATSAPP_CHANNEL_URL || 'https://whatsapp.com/channel/0029VbEKwbnCXC3EkbjtEW0f/100';
 const configuredSupabaseKey = process.env.SUPABASE_ANON_KEY || '';
 let supabaseKeyIsPublic = configuredSupabaseKey.startsWith('sb_publishable_');
 if (!supabaseKeyIsPublic) {
@@ -21,7 +22,8 @@ export const appConfig = {
   webOrigin: process.env.WEB_ORIGIN || 'http://localhost:5173',
   botName: process.env.BOT_NAME || 'SAITAMA BOT',
   prefix: process.env.BOT_PREFIX || '.',
-  channelUrl: process.env.WHATSAPP_CHANNEL_URL || 'https://whatsapp.com/channel/0029VbEKwbnCXC3EkbjtEW0f',
+  channelUrl,
+  channelPostId: process.env.WHATSAPP_CHANNEL_POST_ID || channelUrl.match(/\/channel\/[^/?#]+\/(\d+)\/?(?:[?#]|$)/i)?.[1] || '100',
   supabaseUrl: (process.env.SUPABASE_URL || '').replace(/\/+$/, ''),
   supabaseAnonKey: supabaseKeyIsPublic ? configuredSupabaseKey : '',
   sessionDir: path.resolve(process.env.SESSION_DIR || path.join(root, 'backend/data/sessions')),

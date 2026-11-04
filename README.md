@@ -12,13 +12,13 @@ Users can sign in with Google through Supabase Auth or use the existing email/pa
 
 Commands with real handlers include core status commands; `.ai`/`.gpt` using an OpenAI-compatible provider; six URL-shortener aliases using the configured shortener endpoint; TMDB search/details; coin, dice, number-guessing, rock-paper-scissors and safe arithmetic; reversible `.emojiencrypt`/`.emojidecrypt`; `.sciencefact`; the listed Unicode text-styling commands; time, weather, password generation, QR-code images; and selected group metadata, messaging, and moderation actions. Group changes check caller and bot admin rights where required.
 
-The WhatsApp `.menu` command is text-only; it does not reattach the local wallpaper. It shows the bot name, the account's configured prefix and uptime and groups active commands under their catalog categories with bullets. The bot adds a lightning reaction when it receives a prefixed command. Replies use a bold Unicode display style while preserving copyable command syntax and links. Owner info uses the configured WhatsApp number. Only `.menu` and `.channel` attach the configured channel's newsletter context so compatible WhatsApp clients can show the native **View channel** action; ordinary command replies do not carry synthetic forwarded-channel metadata. This associates those two replies with the channel but does not forward an actual channel post. The menu excludes commands without working handlers; use the dashboard's Command library for the full inventory and setup status.
+The WhatsApp `.menu` command does not reattach the local wallpaper. It shows the bot name, the account's configured prefix and uptime and groups active commands under their catalog categories with bullets. The bot adds a lightning reaction when it receives a prefixed command. Replies use a bold Unicode display style while preserving copyable command syntax and links. Owner info uses the configured WhatsApp number. `.menu` and `.channel` fetch and forward the configured real channel post, which includes its original image when present and uses the actual newsletter message ID for WhatsApp's native **View channel** action. Ordinary command replies do not carry channel metadata. The menu excludes commands without working handlers; use the dashboard's Command library for the full inventory and setup status.
 
 When a command name is mistyped, the bot suggests a close match when available and shows that command's usage. Commands that require arguments return their documented syntax when the format is missing or invalid.
 
 The full requested inventory is searchable in **Command library**. Entries are labeled `ACTIVE`, `NEEDS SETUP`, or `NOT BUILT`, based on real handlers and the provider keys currently configured on the server. The remainder of the extensive download, compiler, anti-abuse, automation, owner, sports, media, GFX, and other moderation set is **not implemented** and is never presented as working.
 
-The native channel action requires a valid `WHATSAPP_CHANNEL_URL` invite that Baileys can resolve to channel metadata. If metadata lookup fails, the bot logs the failure and sends the reply without the channel action.
+Set `WHATSAPP_CHANNEL_URL` to the channel post URL (for example `https://whatsapp.com/channel/0029VbEKwbnCXC3EkbjtEW0f/100`) and `WHATSAPP_CHANNEL_POST_ID` to that post's numeric ID. Baileys resolves the channel invite and fetches that exact post; if lookup or fetching fails, the bot logs the reason and sends a clear fallback without fabricated forwarded metadata. WhatsApp rendering still needs to be verified on a real linked device.
 
 ## Requirements
 
@@ -47,7 +47,7 @@ The native channel action requires a valid `WHATSAPP_CHANNEL_URL` invite that Ba
    openssl rand -hex 32   # use a different result for SESSION_ENCRYPTION_KEY
    ```
 
-   Set `DATABASE_URL`, `JWT_SECRET`, `SESSION_ENCRYPTION_KEY`, `WEB_ORIGIN`, and a verified `OWNER_EMAIL` in `.env`. For Google sign-in, set `SUPABASE_URL` and `SUPABASE_ANON_KEY` to your Supabase project URL and public anon/publishable key. Set `PGSSL=true` when your managed PostgreSQL/Supabase connection requires TLS. Set `OWNER_NUMBER`, `WHATSAPP_CHANNEL_URL`, and provider keys only to real values. `WHATSAPP_CHANNEL_URL` must be HTTPS.
+   Set `DATABASE_URL`, `JWT_SECRET`, `SESSION_ENCRYPTION_KEY`, `WEB_ORIGIN`, and a verified `OWNER_EMAIL` in `.env`. For Google sign-in, set `SUPABASE_URL` and `SUPABASE_ANON_KEY` to your Supabase project URL and public anon/publishable key. Set `PGSSL=true` when your managed PostgreSQL/Supabase connection requires TLS. Set `OWNER_NUMBER`, `WHATSAPP_CHANNEL_URL`, `WHATSAPP_CHANNEL_POST_ID`, and provider keys only to real values. `WHATSAPP_CHANNEL_URL` must be HTTPS.
 
 3. Install and initialize the database:
 

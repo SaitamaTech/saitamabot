@@ -3,6 +3,7 @@ import dns from 'node:dns/promises';
 import { evaluate } from 'mathjs';
 import QRCode from 'qrcode';
 import ipaddr from 'ipaddr.js';
+import { proto } from '@whiskeysockets/baileys';
 import { getPool } from '../db.js';
 import { appConfig } from '../config.js';
 import { logger } from '../logger.js';
@@ -13,7 +14,7 @@ import { findCommandSuggestion, formatActiveCommandMenu, formatCommandUsage, for
 const startedAt = Date.now();
 const games = new Map();
 const commandBuckets = new Map();
-const newsletterContextCache = new WeakMap();
+const newsletterPostCache = new WeakMap();
 let callsSinceSweep = 0;
 const supported = new Set(catalog.filter((c) => c.status === 'implemented').map((c) => c.name.slice(1)));
 const textCommands = new Set(['acute','allstyles','fullwidth','inverted','smallcaps','tagstyle','circled','circledneg','curvy1','curvy2','curvy3','parenthesized','squared','squaredneg','mathbold','mathboldfraktur','mathbolditalic','mathboldscript','mathdoublestruck','mathfraktur','mathmonospace','mathsans','cjkthai','fauxcyrillic','fauxethiopic','regionalindicator','rockdots','stroked','subscript','superscript']);
@@ -43,43 +44,102 @@ export function stylePremiumText(value) {
   }).join('');
 }
 
-async function getNewsletterContext(sock) {
-  if (!appConfig.channelUrl) return null;
-  if (typeof sock.newsletterMetadata !== 'function') {
-    logger.warn('WhatsApp channel button unavailable: newsletter metadata is not supported by this socket');
-    return null;
-  }
+function getNewsletterMessages(response, newsletterJid) {
+  const messages = [];
+  const visit = (node) => {
+    if (!Array.isArray(node?.content)) return;
+    for (const child of node.content) {
+      if (child.tag === 'message') {
+        const attrs = child.attrs || {};
+        let message;
+        if (Buffer.isBuffer(child.content) || child.content instanceof Uint8Array) {
+          message = proto.WebMessageInfo.decode(child.content);
+        } else if (Array.isArray(child.content)) {
+          const plaintext = child.content.find((item) => item.tag === 'plaintext')?.content;
+          if (Buffer.isBuffer(plaintext) || plaintext instanceof Uint8Array) {
+            message = {
+              key: {
+                id: attrs.message_id || attrs.server_id,
+                remoteJid: attrs.from || newsletterJid,
+                fromMe: false,
+              },
+              message: proto.Message.decode(plaintext),
+              messageTimestamp: Number(attrs.t) || 0,
+            };
+          }
+        }
+        if (message?.message) {
+          messages.push({
+            ...message,
+            key: {
+              ...message.key,
+              id: message.key?.id || attrs.message_id || attrs.server_id,
+              remoteJid: message.key?.remoteJid || attrs.from || newsletterJid,
+              server_id: message.key?.server_id || attrs.server_id,
+            },
+          });
+        }
+      }
+      visit(child);
+    }
+  };
+  visit(response);
+  return messages;
+}
 
-  const cached = newsletterContextCache.get(sock);
+async function getNewsletterPost(sock) {
+  if (!appConfig.channelUrl) throw new Error('WhatsApp channel URL is not configured');
+  if (typeof sock.newsletterMetadata !== 'function') {
+    throw new Error('This Baileys socket does not support newsletter metadata');
+  }
+  if (typeof sock.newsletterFetchMessages !== 'function') {
+    throw new Error('This Baileys socket does not support fetching newsletter posts');
+  }
+  const postId = Number(appConfig.channelPostId);
+  if (!Number.isSafeInteger(postId) || postId < 1) {
+    throw new Error('WHATSAPP_CHANNEL_POST_ID must identify a post in WHATSAPP_CHANNEL_URL');
+  }
+  const cached = newsletterPostCache.get(sock);
   if (cached) return cached;
 
   const inviteCode = new URL(appConfig.channelUrl).pathname.match(/\/channel\/([^/]+)/i)?.[1];
-  if (!inviteCode) {
-    logger.warn('WhatsApp channel button unavailable: channel URL has no invite code');
-    return null;
-  }
-
-  const contextPromise = sock.newsletterMetadata('invite', inviteCode).then((metadata) => {
+  if (!inviteCode) throw new Error('WhatsApp channel URL has no invite code');
+  const postPromise = (async () => {
+    const metadata = await sock.newsletterMetadata('invite', inviteCode);
     if (!/^\d+@newsletter$/.test(metadata?.id || '') || !metadata?.name) {
       throw new Error('WhatsApp returned incomplete channel metadata');
     }
-    return {
+    const response = await sock.newsletterFetchMessages(metadata.id, 100, 0, postId - 1);
+    const message = getNewsletterMessages(response, metadata.id).find((candidate) =>
+      String(candidate.key?.server_id || candidate.key?.id || '') === String(postId)
+    );
+    if (!message?.message) {
+      throw new Error(`WhatsApp did not return channel post ${postId}`);
+    }
+    return { message, newsletterJid: metadata.id, newsletterName: safeText(metadata.name, 100), postId };
+  })().catch((error) => {
+    newsletterPostCache.delete(sock);
+    throw error;
+  });
+  newsletterPostCache.set(sock, postPromise);
+  return postPromise;
+}
+
+async function sendNewsletterPost(sock, jid) {
+  const post = await getNewsletterPost(sock);
+  await sock.sendMessage(jid, {
+    forward: post.message,
+    force: true,
+    contextInfo: {
       forwardingScore: 1,
       isForwarded: true,
       forwardedNewsletterMessageInfo: {
-        newsletterJid: metadata.id,
-        serverMessageId: -1,
-        newsletterName: safeText(metadata.name, 100),
+        newsletterJid: post.newsletterJid,
+        serverMessageId: post.postId,
+        newsletterName: post.newsletterName,
       },
-    };
-  }).catch((error) => {
-    newsletterContextCache.delete(sock);
-    logger.warn('WhatsApp channel button metadata lookup failed', { reason: error.name });
-    return null;
+    },
   });
-
-  newsletterContextCache.set(sock, contextPromise);
-  return contextPromise;
 }
 
 export async function reactToCommand(sock, jid, message) {
@@ -412,14 +472,23 @@ export async function processIncomingMessage({ sock, userId, message, io }) {
 }
 
 export async function sendCommandResponse(sock,jid,result,{image,mentions,withoutPrefix=false,channelAction=false}={}) {
-  const body=safeText(result,3500);
+  let body=safeText(result,3500);
+  if (channelAction) {
+    try {
+      await sendNewsletterPost(sock, jid);
+    } catch (error) {
+      logger.warn('WhatsApp channel post forwarding failed', {
+        postId: appConfig.channelPostId || 'unset',
+        reason: error.message,
+      });
+      body = `${body}\n\nThe configured channel post could not be loaded right now.`;
+    }
+  }
   const formatted=withoutPrefix ? `${body}\n\n━━━━━━━━━━━━━━━━━━\n⚡ POWERED BY SAITAMA TECH\n━━━━━━━━━━━━━━━━━━` : `━━━━━━━━━━━━━━━━━━\n🔥 SAITAMA BOT\n━━━━━━━━━━━━━━━━━━\n\n${body}\n\n━━━━━━━━━━━━━━━━━━\n⚡ POWERED BY SAITAMA TECH\n━━━━━━━━━━━━━━━━━━`;
   const premiumFormatted = stylePremiumText(formatted);
-  const newsletterContext = channelAction ? await getNewsletterContext(sock) : null;
-  const contextInfo = newsletterContext ? { contextInfo: newsletterContext } : {};
   if(image) {
     const caption = premiumFormatted.length > 900 ? '🔥 SAITAMA BOT' : premiumFormatted;
-    await sock.sendMessage(jid,{image,caption,mentions,...contextInfo});
+    await sock.sendMessage(jid,{image,caption,mentions});
     if(caption !== premiumFormatted) await sock.sendMessage(jid,{text:premiumFormatted,mentions});
-  } else await sock.sendMessage(jid,{text:premiumFormatted,mentions,...contextInfo});
+  } else await sock.sendMessage(jid,{text:premiumFormatted,mentions});
 }
