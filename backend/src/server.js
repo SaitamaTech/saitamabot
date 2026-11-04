@@ -24,7 +24,14 @@ const whatsapp=new WhatsAppManager(io);
 app.locals.whatsapp=whatsapp;
 app.disable('x-powered-by');
 if(process.env.TRUST_PROXY==='1') app.set('trust proxy',1);
-app.use(helmet({crossOriginEmbedderPolicy:false,contentSecurityPolicy:process.env.NODE_ENV==='production'?undefined:false}));
+const connectSources=["'self'"];
+if(appConfig.supabaseUrl) connectSources.push(new URL(appConfig.supabaseUrl).origin);
+app.use(helmet({
+  crossOriginEmbedderPolicy:false,
+  contentSecurityPolicy:process.env.NODE_ENV==='production'
+    ? {directives:{connectSrc:connectSources}}
+    : false,
+}));
 app.use(cors({origin:appConfig.webOrigin,credentials:true,methods:['GET','POST','PUT','DELETE','OPTIONS']}));
 app.use((req,res,next)=>{
   const origin=req.get('origin');
