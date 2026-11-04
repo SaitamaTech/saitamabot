@@ -80,13 +80,6 @@ export class WhatsAppManager {
       try { current.sock?.end(undefined); } catch {}
       await fs.unlink(current.auth.authFile).catch(()=>{});
     } else if (current?.status === 'pairing') {
-      this.requestCode(current).catch((error) => {
-        logger.warn('WhatsApp pairing code refresh failed', { userId, reason: error.name });
-        current.status='error'; current.closed=true; this.connections.delete(userId);
-        try { current.sock?.end(undefined); } catch {}
-        getPool().query('UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1',[userId,'error','Pairing code could not be refreshed.']).catch(()=>{});
-        this.notify(userId,'error',{message:'Could not refresh the pairing code. Check the number and try again.'});
-      });
       return { status: 'pairing' };
     }
     clearTimeout(this.reconnectTimers.get(userId));
@@ -96,7 +89,7 @@ export class WhatsAppManager {
     if (!storedPhone) throw new Error('A phone number is required for first-time pairing.');
     const auth = await this.loadAuth(userId);
     if (restoring && row.rows[0]?.status === 'connected' && !auth.state.creds.registered) throw new Error('A connected session has no authenticated credentials to restore.');
-    const session = { userId, phone: storedPhone, status: auth.state.creds.registered ? 'connecting' : 'pairing', sock: null, auth, attempts: 0, registered: Boolean(auth.state.creds.registered), closed: false };
+    const session = { userId, phone: storedPhone, status: auth.state.creds.registered ? 'connecting' : 'pairing', sock: null, auth, attempts: 0, registered: Boolean(auth.state.creds.registered), closed: false, pairingCode: null };
     this.connections.set(userId, session);
     await getPool().query('UPDATE whatsapp_sessions SET phone=$2,status=$3,last_disconnect=NULL,updated_at=now() WHERE user_id=$1', [userId, storedPhone, session.status]);
     this.notify(userId, session.status);
@@ -122,7 +115,7 @@ export class WhatsAppManager {
       sock.ev.on('connection.update', async (update) => {
         if (this.connections.get(userId) !== session) return;
         if (update.connection === 'open') {
-          session.status = 'connected'; session.registered = true; session.attempts = 0;
+          session.status = 'connected'; session.registered = true; session.pairingCode = null; session.attempts = 0;
           const number = sock.user?.id?.split(':')[0]?.split('@')[0] || session.phone;
           await getPool().query('UPDATE whatsapp_sessions SET phone=$2,status=$3,connected_at=now(),last_disconnect=NULL,updated_at=now() WHERE user_id=$1', [userId, number, 'connected']).catch(()=>{});
           this.notify(userId, 'connected', { phone: number });
@@ -163,6 +156,7 @@ export class WhatsAppManager {
       if (this.connections.get(session.userId)!==session || session.closed) return;
       try {
         const code = await session.sock.requestPairingCode(session.phone);
+        session.pairingCode = code;
         this.io.to(`user:${session.userId}`).emit('pairing:code', { code });
         session.status = 'pairing';
         await getPool().query('UPDATE whatsapp_sessions SET status=$2,updated_at=now() WHERE user_id=$1', [session.userId, 'pairing']).catch(()=>{});
@@ -176,9 +170,38 @@ export class WhatsAppManager {
     throw lastError || new Error('Pairing code request failed.');
   }
 
+  getPairingCode(userId) {
+    const session = this.connections.get(userId);
+    return session?.status === 'pairing' ? session.pairingCode || null : null;
+  }
+
+  async refreshPairingCode(userId) {
+    const session = this.connections.get(userId);
+    if (!session || session.status !== 'pairing') {
+      throw new Error('There is no active pairing request. Request a pairing code first.');
+    }
+
+    try {
+      await this.requestCode(session);
+    } catch (error) {
+      logger.warn('WhatsApp pairing code refresh failed', { userId, reason: error.name });
+      session.status = 'error';
+      session.closed = true;
+      this.connections.delete(userId);
+      try { session.sock?.end(undefined); } catch {}
+      await getPool().query(
+        'UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1',
+        [userId,'error','Pairing code could not be refreshed.'],
+      ).catch(()=>{});
+      this.notify(userId,'error',{message:'Could not refresh the pairing code. Check the number and try again.'});
+      throw new Error('Could not refresh the pairing code. Check the number and try again.');
+    }
+  }
+
   async handleClose(session, error) {
     if (session.closed || this.connections.get(session.userId) !== session) return;
     session.closed = true;
+    session.pairingCode = null;
     const userId = session.userId;
     const statusCode = error?.output?.statusCode;
     const loggedOut = statusCode === DisconnectReason.loggedOut;

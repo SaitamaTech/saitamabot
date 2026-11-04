@@ -46,7 +46,7 @@ router.get('/dashboard', authenticate, async (req,res) => {
 
 router.get('/whatsapp/status', authenticate, async (req,res) => {
   const result=await getPool().query('SELECT phone,status,connected_at,last_disconnect,updated_at FROM whatsapp_sessions WHERE user_id=$1',[req.user.id]);
-  res.json({session:result.rows[0]||{status:'disconnected'}});
+  res.json({session:result.rows[0]||{status:'disconnected'},pairingCode:req.app.locals.whatsapp.getPairingCode(req.user.id)});
 });
 router.post('/whatsapp/pair', authenticate, pairingLimiter, async (req,res) => {
   const parsed=z.object({phone:phoneSchema}).safeParse(req.body);
@@ -57,6 +57,14 @@ router.post('/whatsapp/pair', authenticate, pairingLimiter, async (req,res) => {
     res.status(202).json({status:'pairing',message:'Pairing requested. The code will arrive over your private real-time connection.'});
   } catch(error) {
     res.status(409).json({error:error.message||'Could not start WhatsApp pairing.'});
+  }
+});
+router.post('/whatsapp/pair/refresh', authenticate, pairingLimiter, async (req,res) => {
+  try {
+    await req.app.locals.whatsapp.refreshPairingCode(req.user.id);
+    res.json({status:'pairing'});
+  } catch(error) {
+    res.status(409).json({error:error.message||'Could not refresh the pairing code.'});
   }
 });
 router.post('/whatsapp/disconnect', authenticate, async (req,res) => {

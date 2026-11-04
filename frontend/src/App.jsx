@@ -165,12 +165,18 @@ function Overview({ data, integrations, setPage }) {
 function WhatsAppPage({ data, integrations, onRefresh, pairCode }) {
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
+  const [refreshBusy, setRefreshBusy] = useState(false);
   const [disconnectBusy, setDisconnectBusy] = useState(false);
   const [code, setCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   useEffect(() => { if (pairCode) setCode(pairCode); }, [pairCode]);
+  useEffect(() => {
+    api('/api/whatsapp/status')
+      .then(result => { if (result.pairingCode) setCode(result.pairingCode); })
+      .catch(e => setError(e.message));
+  }, []);
   const status = data?.session?.status || 'disconnected';
   const connected = status === 'connected';
   const pairing = status === 'pairing' || status === 'connecting';
@@ -179,6 +185,14 @@ function WhatsAppPage({ data, integrations, onRefresh, pairCode }) {
     try { await api('/api/whatsapp/pair',{method:'POST',body:JSON.stringify({phone})}); setNotice('Pairing request started. Waiting for a code from WhatsApp…'); await onRefresh(); }
     catch(e){setError(e.message);}
     finally{setBusy(false);}
+  };
+  const refreshCode = async () => {
+    setError(''); setNotice(''); setCode(''); setRefreshBusy(true);
+    try {
+      await api('/api/whatsapp/pair/refresh',{method:'POST',body:'{}'});
+      setNotice('A new code was requested. Enter it as soon as it appears.');
+    } catch(e) { setError(e.message); }
+    finally { setRefreshBusy(false); }
   };
   const disconnect = async () => {
     if(!window.confirm('Disconnect WhatsApp and permanently delete this encrypted session from this server?'))return;
@@ -195,8 +209,8 @@ function WhatsAppPage({ data, integrations, onRefresh, pairCode }) {
     <div className="pair-grid">
       <section className="panel pair-panel"><div className="panel-heading"><div><div className="panel-kicker">STEP 01 — REQUEST</div><h2>Connect your device</h2></div><div className="step-count">01<span>/02</span></div></div>
         <p className="pair-intro">Enter your WhatsApp number with its country calling code. We’ll request a pairing code from WhatsApp and send it privately to this dashboard.</p>
-        <form onSubmit={requestCode} className="pair-form"><label htmlFor="phone">PHONE NUMBER <span>INTERNATIONAL FORMAT</span></label><div className="phone-input"><span>+</span><input id="phone" inputMode="tel" autoComplete="tel" placeholder="2348012345678" value={phone.replace(/^\+/, '')} onChange={e=>setPhone(e.target.value.replace(/[^\d+]/g,''))} minLength={7} maxLength={16} required /></div><small>Include your country code. Example: 234… for Nigeria.</small>{error&&<div className="form-error"><ShieldAlert size={15}/>{error}</div>}{notice&&<div className="form-success"><CheckCircle2 size={15}/>{notice}</div>}<button className="button button-primary pair-submit" type="submit" disabled={busy||!integrations?.pairingAvailable||connected}>{busy?<><span className="spinner"/> Requesting…</>:<><Radio size={15}/> Generate pairing code <ChevronRight size={15}/></>}</button></form>
-        {code&&<div className="pair-code"><div><span className="panel-kicker">YOUR ONE-TIME CODE</span><small>Enter it in WhatsApp. Do not share it.</small></div><div className="code-display">{code.match(/.{1,4}/g)?.join(' ')}</div><button className="button button-secondary copy-button" onClick={copyCode}>{copied?<Check size={14}/>:<Copy size={14}/>} {copied?'Copied':'Copy code'}</button></div>}
+        <form onSubmit={requestCode} className="pair-form"><label htmlFor="phone">PHONE NUMBER <span>INTERNATIONAL FORMAT</span></label><div className="phone-input"><span>+</span><input id="phone" inputMode="tel" autoComplete="tel" placeholder="2348012345678" value={phone.replace(/^\+/, '')} onChange={e=>setPhone(e.target.value.replace(/[^\d+]/g,''))} minLength={7} maxLength={16} required /></div><small>Include your country code. Example: 234… for Nigeria.</small>{error&&<div className="form-error"><ShieldAlert size={15}/>{error}</div>}{notice&&<div className="form-success"><CheckCircle2 size={15}/>{notice}</div>}<button className="button button-primary pair-submit" type="submit" disabled={busy||pairing||!integrations?.pairingAvailable||connected}>{busy?<><span className="spinner"/> Requesting…</>:pairing?<><Radio size={15}/> Code already requested</>:<><Radio size={15}/> Generate pairing code <ChevronRight size={15}/></>}</button></form>
+        {code&&<div className="pair-code"><div><span className="panel-kicker">YOUR ONE-TIME CODE</span><small>Enter it in WhatsApp. Do not share it.</small></div><div className="code-display">{code.match(/.{1,4}/g)?.join(' ')}</div><div className="pair-code-actions"><button className="button button-secondary copy-button" onClick={copyCode}>{copied?<Check size={14}/>:<Copy size={14}/>} {copied?'Copied':'Copy code'}</button><button className="button button-secondary copy-button" onClick={refreshCode} disabled={refreshBusy||!pairing}>{refreshBusy?<><span className="spinner"/> Requesting</>:<><Radio size={14}/> Get a new code</>}</button></div></div>}
         <div className="pair-status"><span className={pairing?'pulse':'status-static'}><CircleDashed size={15}/></span><div><b>{connected?'Device connected':pairing?'Waiting for WhatsApp':'Ready when you are'}</b><small>{connected?'Your account is linked.':pairing?'Keep this page open while entering the code.':'Your session will appear here when connected.'}</small></div><span className="pair-live"><i/> LIVE STATUS</span></div>
         {connected&&<div className="danger-zone"><div><b>Disconnect this account</b><small>Revokes and deletes this server-side session.</small></div><button disabled={disconnectBusy} className="button button-danger" onClick={disconnect}>{disconnectBusy?'Disconnecting…':'Disconnect & delete'}</button></div>}
         {!connected&&data?.session?.status==='disconnected'&&data?.session?.phone&&<div className="danger-zone"><div><b>Saved session metadata</b><small>Phone ending in {data.session.phone.slice(-4)} · Session not active.</small></div><button className="button button-danger" onClick={disconnect}>Delete session</button></div>}
