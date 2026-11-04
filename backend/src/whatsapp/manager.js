@@ -133,7 +133,11 @@ export class WhatsAppManager {
       });
 
       if (!session.registered) this.requestCode(session).catch((error) => {
-        logger.warn('WhatsApp pairing code request failed', { userId, reason: error.name });
+        logger.warn('WhatsApp pairing code request failed', {
+          userId,
+          reason: error.message,
+          statusCode: error.output?.statusCode,
+        });
         session.status = 'error';
         session.closed = true;
         this.connections.delete(userId);
@@ -151,6 +155,8 @@ export class WhatsAppManager {
   }
 
   async requestCode(session) {
+    await session.sock.waitForSocketOpen();
+    if (this.connections.get(session.userId)!==session || session.closed) return;
     let lastError;
     for (let attempt=0; attempt<4; attempt++) {
       if (this.connections.get(session.userId)!==session || session.closed) return;
@@ -206,7 +212,9 @@ export class WhatsAppManager {
     const userId = session.userId;
     const statusCode = error?.output?.statusCode;
     const loggedOut = statusCode === DisconnectReason.loggedOut;
-    const description = loggedOut ? 'WhatsApp logged out this linked device.' : 'WhatsApp connection closed.';
+    const description = loggedOut
+      ? 'WhatsApp logged out this linked device.'
+      : `WhatsApp connection closed${statusCode ? ` (status ${statusCode})` : ''}.`;
     this.connections.delete(userId);
     session.status = loggedOut ? 'logged_out' : 'disconnected';
     await getPool().query('UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1', [userId, session.status, description]).catch(()=>{});
@@ -220,9 +228,9 @@ export class WhatsAppManager {
     if (!session.registered) {
       await getPool().query(
         'UPDATE whatsapp_sessions SET status=$2,last_disconnect=$3,updated_at=now() WHERE user_id=$1',
-        [userId,'error','WhatsApp closed the connection before pairing completed.'],
+        [userId,'error',`WhatsApp closed the connection before pairing completed${statusCode ? ` (status ${statusCode})` : ''}.`],
       ).catch(()=>{});
-      this.notify(userId,'error',{message:'WhatsApp closed the pairing connection. Generate a new code to try again.'});
+      this.notify(userId,'error',{message:`WhatsApp closed the pairing connection${statusCode ? ` (status ${statusCode})` : ''}. Check the server logs, then request a new code.`});
       return;
     }
     const next = Math.min(60_000, 1000 * (2 ** Math.min(session.attempts++, 6)));
