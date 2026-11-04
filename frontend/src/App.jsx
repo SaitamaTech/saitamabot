@@ -162,7 +162,7 @@ function Overview({ data, integrations, setPage }) {
   </div>;
 }
 
-function WhatsAppPage({ data, integrations, onRefresh, pairCode }) {
+function WhatsAppPage({ data, integrations, onRefresh, pairCode, clearPairCode }) {
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [refreshBusy, setRefreshBusy] = useState(false);
@@ -174,17 +174,22 @@ function WhatsAppPage({ data, integrations, onRefresh, pairCode }) {
   const status = data?.session?.status || 'disconnected';
   const connected = status === 'connected';
   const pairing = status === 'pairing' || status === 'connecting';
+  const pairingInterrupted = Boolean(code) && !pairing && !connected;
   useEffect(() => {
     if (pairCode) setCode(pairCode);
-    else if (!pairing) setCode('');
-  }, [pairCode, pairing]);
+  }, [pairCode]);
+  useEffect(() => {
+    const clear = () => setCode('');
+    window.addEventListener('saitama-clear-pairing-code', clear);
+    return () => window.removeEventListener('saitama-clear-pairing-code', clear);
+  }, []);
   useEffect(() => {
     api('/api/whatsapp/status')
       .then(result => { if (result.pairingCode) setCode(result.pairingCode); })
       .catch(e => setError(e.message));
   }, []);
   const requestCode = async (event) => {
-    event.preventDefault(); setError(''); setNotice(''); setCode(''); setBusy(true);
+    event.preventDefault(); setError(''); setNotice(''); setCode(''); clearPairCode(); setBusy(true);
     try { await api('/api/whatsapp/pair',{method:'POST',body:JSON.stringify({phone})}); setNotice('Pairing request started. Waiting for a code from WhatsApp…'); await onRefresh(); }
     catch(e){setError(e.message);}
     finally{setBusy(false);}
@@ -200,7 +205,7 @@ function WhatsAppPage({ data, integrations, onRefresh, pairCode }) {
   const disconnect = async () => {
     if(!window.confirm('Disconnect WhatsApp and permanently delete this encrypted session from this server?'))return;
     setDisconnectBusy(true);setError('');
-    try {await api('/api/whatsapp/disconnect',{method:'POST',body:'{}'});setCode('');setNotice('Session disconnected and deleted.');await onRefresh();}
+    try {await api('/api/whatsapp/disconnect',{method:'POST',body:'{}'});setCode('');clearPairCode();setNotice('Session disconnected and deleted.');await onRefresh();}
     catch(e){setError(e.message);}
     finally{setDisconnectBusy(false);}
   };
@@ -213,8 +218,8 @@ function WhatsAppPage({ data, integrations, onRefresh, pairCode }) {
       <section className="panel pair-panel"><div className="panel-heading"><div><div className="panel-kicker">STEP 01 — REQUEST</div><h2>Connect your device</h2></div><div className="step-count">01<span>/02</span></div></div>
         <p className="pair-intro">Enter your WhatsApp number with its country calling code. We’ll request a pairing code from WhatsApp and send it privately to this dashboard.</p>
         <form onSubmit={requestCode} className="pair-form"><label htmlFor="phone">PHONE NUMBER <span>INTERNATIONAL FORMAT</span></label><div className="phone-input"><span>+</span><input id="phone" inputMode="tel" autoComplete="tel" placeholder="2348012345678" value={phone.replace(/^\+/, '')} onChange={e=>setPhone(e.target.value.replace(/[^\d+]/g,''))} minLength={7} maxLength={16} required /></div><small>Include your country code. Example: 234… for Nigeria.</small>{error&&<div className="form-error"><ShieldAlert size={15}/>{error}</div>}{notice&&<div className="form-success"><CheckCircle2 size={15}/>{notice}</div>}<button className="button button-primary pair-submit" type="submit" disabled={busy||pairing||!integrations?.pairingAvailable||connected}>{busy?<><span className="spinner"/> Requesting…</>:pairing?<><Radio size={15}/> Code already requested</>:<><Radio size={15}/> Generate pairing code <ChevronRight size={15}/></>}</button></form>
-        {code&&<div className="pair-code"><div><span className="panel-kicker">YOUR ONE-TIME CODE</span><small>Enter it in WhatsApp. Do not share it.</small></div><div className="code-display">{code.match(/.{1,4}/g)?.join(' ')}</div><div className="pair-code-actions"><button className="button button-secondary copy-button" onClick={copyCode}>{copied?<Check size={14}/>:<Copy size={14}/>} {copied?'Copied':'Copy code'}</button><button className="button button-secondary copy-button" onClick={refreshCode} disabled={refreshBusy||!pairing}>{refreshBusy?<><span className="spinner"/> Requesting</>:<><Radio size={14}/> Get a new code</>}</button></div></div>}
-        <div className="pair-status"><span className={pairing?'pulse':'status-static'}><CircleDashed size={15}/></span><div><b>{connected?'Device connected':pairing?'Waiting for WhatsApp':'Ready when you are'}</b><small>{connected?'Your account is linked.':pairing?'Keep this page open while entering the code.':'Your session will appear here when connected.'}</small></div><span className="pair-live"><i/> LIVE STATUS</span></div>
+        {code&&<div className="pair-code"><div><span className="panel-kicker">YOUR ONE-TIME CODE</span><small>Enter it in WhatsApp. Do not share it.</small></div><div className="code-display">{code.match(/.{1,4}/g)?.join(' ')}</div>{pairingInterrupted&&<div className="form-error"><ShieldAlert size={15}/> The connection closed after this code was issued. It may no longer work; try it now, and request a fresh code if WhatsApp rejects it.</div>}<div className="pair-code-actions"><button className="button button-secondary copy-button" onClick={copyCode}>{copied?<Check size={14}/>:<Copy size={14}/>} {copied?'Copied':'Copy code'}</button><button className="button button-secondary copy-button" onClick={refreshCode} disabled={refreshBusy||!pairing}>{refreshBusy?<><span className="spinner"/> Requesting</>:<><Radio size={14}/> Get a new code</>}</button></div></div>}
+        <div className="pair-status"><span className={pairing?'pulse':'status-static'}><CircleDashed size={15}/></span><div><b>{connected?'Device connected':pairing?'Waiting for WhatsApp':pairingInterrupted?'Connection closed':'Ready when you are'}</b><small>{connected?'Your account is linked.':pairing?'Keep this page open while entering the code.':pairingInterrupted?'The last code is still shown above. Request a fresh code if WhatsApp rejects it.':'Your session will appear here when connected.'}</small></div><span className="pair-live"><i/> LIVE STATUS</span></div>
         {connected&&<div className="danger-zone"><div><b>Disconnect this account</b><small>Revokes and deletes this server-side session.</small></div><button disabled={disconnectBusy} className="button button-danger" onClick={disconnect}>{disconnectBusy?'Disconnecting…':'Disconnect & delete'}</button></div>}
         {!connected&&data?.session?.status==='disconnected'&&data?.session?.phone&&<div className="danger-zone"><div><b>Saved session metadata</b><small>Phone ending in {data.session.phone.slice(-4)} · Session not active.</small></div><button className="button button-danger" onClick={disconnect}>Delete session</button></div>}
       </section>
@@ -253,6 +258,8 @@ function AdminPage({ data, onLoadUsers }) {
 export default function App() {
   const [user,setUser]=useState(null);const [page,setPage]=useState('overview');const [sidebarOpen,setSidebarOpen]=useState(false);
   const [data,setData]=useState(null);const [integrations,setIntegrations]=useState(null);const [commands,setCommands]=useState([]);const [categories,setCategories]=useState([]);const [summary,setSummary]=useState(initialCounts);const [catalogLoading,setCatalogLoading]=useState(false);const [ownerData,setOwnerData]=useState(null);const [authChecking,setAuthChecking]=useState(true);const [toast,setToast]=useState('');
+  const [pairCode,setPairCode]=useState('');
+  const clearPairCode=useCallback(()=>{setPairCode('');window.dispatchEvent(new Event('saitama-clear-pairing-code'));},[]);
   const [authError,setAuthError]=useState('');
   const [supabaseClient,setSupabaseClient]=useState(null);
   const [googleAuthStatus,setGoogleAuthStatus]=useState('loading');
@@ -315,15 +322,14 @@ export default function App() {
   useEffect(()=>{
     if(!user)return;
     const socket=io({withCredentials:true,transports:['websocket','polling']});
-    socket.on('connection:status',event=>{setData(previous=>previous?{...previous,session:{...previous.session,status:event.status,...(event.phone?{phone:event.phone}:{}),...(event.message?{last_disconnect:event.message}:{})}}:previous);if(!['pairing','connecting'].includes(event.status))setPairCode('');if(event.message)setToast(event.message);});
+    socket.on('connection:status',event=>{setData(previous=>previous?{...previous,session:{...previous.session,status:event.status,...(event.phone?{phone:event.phone}:{}),...(event.message?{last_disconnect:event.message}:{})}}:previous);if(event.status==='connected')clearPairCode();if(event.message)setToast(event.message);});
     socket.on('pairing:code',event=>{window.dispatchEvent(new CustomEvent('saitama-pairing-code',{detail:event.code}));setToast('Pairing code received.');});
     socket.on('command:activity',()=>refresh().catch(()=>{}));
     return()=>socket.disconnect();
-  },[user,refresh]);
-  const [pairCode,setPairCode]=useState('');
+  },[user,refresh,clearPairCode]);
   useEffect(()=>{const listener=e=>setPairCode(e.detail||'');window.addEventListener('saitama-pairing-code',listener);return()=>window.removeEventListener('saitama-pairing-code',listener);},[]);
-  const handleAuth=(newUser)=>{setUser(newUser);setData(null);setPage('overview');};
-  const handleLogout=async()=>{try{await api('/api/auth/logout',{method:'POST',body:'{}'});}catch{}setUser(null);setData(null);setPage('overview');};
+  const handleAuth=(newUser)=>{clearPairCode();setUser(newUser);setData(null);setPage('overview');};
+  const handleLogout=async()=>{try{await api('/api/auth/logout',{method:'POST',body:'{}'});}catch{}clearPairCode();setUser(null);setData(null);setPage('overview');};
   const loadOwner=async()=>{const result=await api('/api/owner/overview');setOwnerData(result);return api('/api/owner/users');};
   useEffect(()=>{if(page==='admin'&&!ownerData)api('/api/owner/overview').then(setOwnerData).catch(e=>setToast(e.message));},[page,ownerData]);
   useEffect(()=>{if(toast){const t=setTimeout(()=>setToast(''),4500);return()=>clearTimeout(t);}},[toast]);
@@ -332,6 +338,6 @@ export default function App() {
   const pageLabels={overview:'Overview',whatsapp:'WhatsApp session',commands:'Command library',admin:'Owner panel'};
   const ownerAccess=Boolean(data?.ownerAccess);
   return <div className="app-shell"><Sidebar page={page} setPage={setPage} user={user} ownerAccess={ownerAccess} onLogout={handleLogout} open={sidebarOpen} setOpen={setSidebarOpen}/><main className="main-area"><header className="topbar"><button className="mobile-menu" aria-label="Open menu" onClick={()=>setSidebarOpen(true)}><Menu size={19}/></button><div className="breadcrumb"><span>SAITAMA BOT</span><ChevronRight size={13}/><b>{pageLabels[page]||'Dashboard'}</b></div><div className="topbar-right"><span className="top-status"><i/> SYSTEM ONLINE</span><span className="top-divider"/><span className="top-avatar">{(user.name||'S')[0].toUpperCase()}</span></div></header>
-    {!data?<div className="page-content loading-screen"><span className="spinner"/> Loading your workspace…</div>:page==='overview'?<Overview data={data} integrations={integrations} setPage={setPage}/>:page==='whatsapp'?<WhatsAppPage data={data} integrations={integrations} onRefresh={refresh} pairCode={pairCode}/>:page==='commands'?<CommandsPage commands={commands} categories={categories} summary={summary} loading={catalogLoading}/>:page==='admin'?<AdminPage data={ownerData} onLoadUsers={loadOwner}/>:null}
+    {!data?<div className="page-content loading-screen"><span className="spinner"/> Loading your workspace…</div>:page==='overview'?<Overview data={data} integrations={integrations} setPage={setPage}/>:page==='whatsapp'?<WhatsAppPage data={data} integrations={integrations} onRefresh={refresh} pairCode={pairCode} clearPairCode={clearPairCode}/>:page==='commands'?<CommandsPage commands={commands} categories={categories} summary={summary} loading={catalogLoading}/>:page==='admin'?<AdminPage data={ownerData} onLoadUsers={loadOwner}/>:null}
     <footer className="main-footer"><span>© SAITAMA TECH · {new Date().getFullYear()}</span><div><a href={GITHUB} target="_blank" rel="noreferrer"><Github size={13}/> GitHub <ExternalLink size={11}/></a><span>PRIVATE INSTANCE</span></div></footer></main>{toast&&<div className="toast"><CheckCircle2 size={15}/>{toast}<button onClick={()=>setToast('')}><X size={14}/></button></div>}</div>;
 }
