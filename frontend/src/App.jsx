@@ -171,6 +171,9 @@ function WhatsAppPage({ data, integrations, onRefresh, pairCode }) {
   const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const status = data?.session?.status || 'disconnected';
+  const connected = status === 'connected';
+  const pairing = status === 'pairing' || status === 'connecting';
   useEffect(() => {
     if (pairCode) setCode(pairCode);
     else if (!pairing) setCode('');
@@ -180,9 +183,6 @@ function WhatsAppPage({ data, integrations, onRefresh, pairCode }) {
       .then(result => { if (result.pairingCode) setCode(result.pairingCode); })
       .catch(e => setError(e.message));
   }, []);
-  const status = data?.session?.status || 'disconnected';
-  const connected = status === 'connected';
-  const pairing = status === 'pairing' || status === 'connecting';
   const requestCode = async (event) => {
     event.preventDefault(); setError(''); setNotice(''); setCode(''); setBusy(true);
     try { await api('/api/whatsapp/pair',{method:'POST',body:JSON.stringify({phone})}); setNotice('Pairing request started. Waiting for a code from WhatsApp…'); await onRefresh(); }
