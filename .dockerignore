@@ -1,0 +1,9 @@
+node_modules
+**/node_modules
+.env
+.env.*
+**/data
+**/sessions
+frontend/dist
+.git
+coverage

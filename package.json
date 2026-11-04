@@ -1,0 +1,26 @@
+{
+  "name": "saitama-bot-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c red,cyan \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm --workspace backend run dev",
+    "dev:web": "npm --workspace frontend run dev",
+    "build": "npm --workspace frontend run build",
+    "start": "npm --workspace backend run start",
+    "test": "npm --workspace backend test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "allowScripts": {
+    "protobufjs@7.6.6": true,
+    "esbuild@0.25.12": true,
+    "@whiskeysockets/baileys@6.7.22": true
+  }
+}

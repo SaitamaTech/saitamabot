@@ -1,0 +1,2684 @@
+[
+  {
+    "name": ".menu",
+    "category": "CORE COMMANDS",
+    "description": "Show commands with active handlers.",
+    "usage": ".menu",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".owner",
+    "category": "CORE COMMANDS",
+    "description": "Show configured bot owner details.",
+    "usage": ".owner",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".ping",
+    "category": "CORE COMMANDS",
+    "description": "Measure bot response time.",
+    "usage": ".ping",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".ping2",
+    "category": "CORE COMMANDS",
+    "description": "Measure bot response time (alias).",
+    "usage": ".ping2",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".ping3",
+    "category": "CORE COMMANDS",
+    "description": "Measure bot response time (alias).",
+    "usage": ".ping3",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".alive",
+    "category": "CORE COMMANDS",
+    "description": "Show bot status and uptime.",
+    "usage": ".alive",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".runtime",
+    "category": "CORE COMMANDS",
+    "description": "Show process runtime.",
+    "usage": ".runtime",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".uptime",
+    "category": "CORE COMMANDS",
+    "description": "Show process uptime.",
+    "usage": ".uptime",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".channel",
+    "category": "CORE COMMANDS",
+    "description": "Show the configured official WhatsApp Channel.",
+    "usage": ".channel",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".jid",
+    "category": "CORE COMMANDS",
+    "description": "Show the current chat identifier.",
+    "usage": ".jid",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".pair",
+    "category": "CORE COMMANDS",
+    "description": "Explain secure account linking through the dashboard.",
+    "usage": ".pair",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".tqto",
+    "category": "CORE COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".ai",
+    "category": "AI COMMANDS",
+    "description": "Ask the configured OpenAI-compatible provider a question.",
+    "usage": ".ai <question>",
+    "permission": "provider key",
+    "status": "implemented",
+    "apiRequirement": "provider key"
+  },
+  {
+    "name": ".gpt",
+    "category": "AI COMMANDS",
+    "description": "Ask the configured OpenAI-compatible provider a question.",
+    "usage": ".gpt <question>",
+    "permission": "provider key",
+    "status": "implemented",
+    "apiRequirement": "provider key"
+  },
+  {
+    "name": ".metaai",
+    "category": "AI COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".qwenai",
+    "category": "AI COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".aiw3",
+    "category": "AI COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gpt3",
+    "category": "AI COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gpt4",
+    "category": "AI COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".flux",
+    "category": "AI COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".mistral",
+    "category": "AI COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".codeai",
+    "category": "AI COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".msatutor",
+    "category": "AI COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".olabiba",
+    "category": "AI COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".triviaai",
+    "category": "AI COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".shortdagd",
+    "category": "URL SHORTENERS",
+    "description": "Shorten an HTTP(S) URL through the configured shortening API.",
+    "usage": ".shortdagd <url>",
+    "permission": "shortener API",
+    "status": "implemented",
+    "apiRequirement": "shortener API"
+  },
+  {
+    "name": ".shortrandom",
+    "category": "URL SHORTENERS",
+    "description": "Shorten an HTTP(S) URL through the configured shortening API.",
+    "usage": ".shortrandom <url>",
+    "permission": "shortener API",
+    "status": "implemented",
+    "apiRequirement": "shortener API"
+  },
+  {
+    "name": ".shortspoo",
+    "category": "URL SHORTENERS",
+    "description": "Shorten an HTTP(S) URL through the configured shortening API.",
+    "usage": ".shortspoo <url>",
+    "permission": "shortener API",
+    "status": "implemented",
+    "apiRequirement": "shortener API"
+  },
+  {
+    "name": ".shortspooemoji",
+    "category": "URL SHORTENERS",
+    "description": "Shorten an HTTP(S) URL through the configured shortening API.",
+    "usage": ".shortspooemoji <url>",
+    "permission": "shortener API",
+    "status": "implemented",
+    "apiRequirement": "shortener API"
+  },
+  {
+    "name": ".shorttinub",
+    "category": "URL SHORTENERS",
+    "description": "Shorten an HTTP(S) URL through the configured shortening API.",
+    "usage": ".shorttinub <url>",
+    "permission": "shortener API",
+    "status": "implemented",
+    "apiRequirement": "shortener API"
+  },
+  {
+    "name": ".shortvgd",
+    "category": "URL SHORTENERS",
+    "description": "Shorten an HTTP(S) URL through the configured shortening API.",
+    "usage": ".shortvgd <url>",
+    "permission": "shortener API",
+    "status": "implemented",
+    "apiRequirement": "shortener API"
+  },
+  {
+    "name": ".moviehome",
+    "category": "MOVIE COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".movierecommend",
+    "category": "MOVIE COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".moviesuggest",
+    "category": "MOVIE COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".movietrending",
+    "category": "MOVIE COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".moviesearch",
+    "category": "MOVIE COMMANDS",
+    "description": "Search TMDB for films.",
+    "usage": ".moviesearch <title>",
+    "permission": "TMDB_API_KEY",
+    "status": "implemented",
+    "apiRequirement": "TMDB_API_KEY"
+  },
+  {
+    "name": ".moviesearch2",
+    "category": "MOVIE COMMANDS",
+    "description": "Search TMDB for films.",
+    "usage": ".moviesearch2 <title>",
+    "permission": "TMDB_API_KEY",
+    "status": "implemented",
+    "apiRequirement": "TMDB_API_KEY"
+  },
+  {
+    "name": ".tmdb",
+    "category": "MOVIE COMMANDS",
+    "description": "Search TMDB for films.",
+    "usage": ".tmdb <title>",
+    "permission": "TMDB_API_KEY",
+    "status": "implemented",
+    "apiRequirement": "TMDB_API_KEY"
+  },
+  {
+    "name": ".moviedetail",
+    "category": "MOVIE COMMANDS",
+    "description": "Show a movie record from TMDB.",
+    "usage": ".moviedetail <TMDB id>",
+    "permission": "TMDB_API_KEY",
+    "status": "implemented",
+    "apiRequirement": "TMDB_API_KEY"
+  },
+  {
+    "name": ".moviedetail2",
+    "category": "MOVIE COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".moviecountries",
+    "category": "MOVIE COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".coin",
+    "category": "GAMES",
+    "description": "Flip a cryptographically random coin.",
+    "usage": ".coin",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".dice",
+    "category": "GAMES",
+    "description": "Roll a six-sided die.",
+    "usage": ".dice",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".guess",
+    "category": "GAMES",
+    "description": "Start or play a private-number guessing game.",
+    "usage": ".guess [1-20]",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".math",
+    "category": "GAMES",
+    "description": "Solve a safe arithmetic expression.",
+    "usage": ".math <expression>",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".urban",
+    "category": "GAMES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".coinbattle",
+    "category": "GAMES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".numbattle",
+    "category": "GAMES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".numberbattle",
+    "category": "GAMES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".rps",
+    "category": "GAMES",
+    "description": "Play rock-paper-scissors.",
+    "usage": ".rps <rock|paper|scissors>",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".rpsls",
+    "category": "GAMES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".triviafact",
+    "category": "GAMES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gamefact",
+    "category": "GAMES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".basketball",
+    "category": "SPORTS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".football",
+    "category": "SPORTS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".othersports",
+    "category": "SPORTS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".ssflash",
+    "category": "SCREENSHOT COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".sslayer",
+    "category": "SCREENSHOT COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".sswebss",
+    "category": "SCREENSHOT COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".acute",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".allstyles",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".fullwidth",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".inverted",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".smallcaps",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".tagstyle",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".circled",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".circledneg",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".curvy1",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".curvy2",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".curvy3",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".parenthesized",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".squared",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".squaredneg",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".mathbold",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".mathboldfraktur",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".mathbolditalic",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".mathboldscript",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".mathdoublestruck",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".mathfraktur",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".mathmonospace",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".mathsans",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".cjkthai",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".fauxcyrillic",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".fauxethiopic",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".regionalindicator",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".rockdots",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".stroked",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".subscript",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".superscript",
+    "category": "TEXT STYLING",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".artoid",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".zhtoid",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".entoid",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".idtoen",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".jatoid",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".kotoid",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".detectlang",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".langlist",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".compiler",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".compilec",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".compilecpp",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".compilecsharp",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".compilejava",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".compilejs",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".compilepython",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".codeanalyzer",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".codeconverter",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".obflow",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".obfmedium",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".obfhigh",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".obfextreme",
+    "category": "DEVELOPER TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".htmlbasic",
+    "category": "WEB TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".htmlextended",
+    "category": "WEB TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".htmlhigh",
+    "category": "WEB TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".htmlmaximum",
+    "category": "WEB TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".htmlencrypt",
+    "category": "WEB TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".html2img",
+    "category": "WEB TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".html2imgdirect",
+    "category": "WEB TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".geoip",
+    "category": "NETWORK TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".hostcheck",
+    "category": "NETWORK TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".hostchecksimple",
+    "category": "NETWORK TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".myipinfo",
+    "category": "NETWORK TOOLS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".emojiencrypt",
+    "category": "OTHER UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".emojidecrypt",
+    "category": "OTHER UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".fdroidapp",
+    "category": "OTHER UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".fdroidpackage",
+    "category": "OTHER UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".fdroidsearch",
+    "category": "OTHER UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".tiktoktranscript",
+    "category": "OTHER UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".youtubetranscript",
+    "category": "OTHER UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".sendemail",
+    "category": "OTHER UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".aiodl",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".capcut",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".doods",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".douyin",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".pinterestdl",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".tiktok",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".twitterdl",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".rednote",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".sfile",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".scloud",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".terabox",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".web2zip",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".play",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".movie",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".mediafire",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".ytmp4",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".ytinfo",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".spotify",
+    "category": "DOWNLOAD COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".qrcode",
+    "category": "MEDIA AND OTHER SERVICES",
+    "description": "Create a QR code image from supplied text or a URL.",
+    "usage": ".qrcode <text or URL>",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".say",
+    "category": "MEDIA AND OTHER SERVICES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".lyrics",
+    "category": "MEDIA AND OTHER SERVICES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".tts",
+    "category": "MEDIA AND OTHER SERVICES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".videodoc",
+    "category": "MEDIA AND OTHER SERVICES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".add",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".close",
+    "category": "GROUP MANAGEMENT",
+    "description": "Restrict messages in this group to admins (admins only).",
+    "usage": ".close",
+    "permission": "group admin",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".closetime",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".creategroup",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".demote",
+    "category": "GROUP MANAGEMENT",
+    "description": "Demote a mentioned participant (bot and caller admins).",
+    "usage": ".demote @member",
+    "permission": "group admin",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".demoteall",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".demotealltime",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".demotetime",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".open",
+    "category": "GROUP MANAGEMENT",
+    "description": "Allow messages in this group (admins only).",
+    "usage": ".open",
+    "permission": "group admin",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".opentime",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".promote",
+    "category": "GROUP MANAGEMENT",
+    "description": "Promote a mentioned participant (bot and caller admins).",
+    "usage": ".promote @member",
+    "permission": "group admin",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".promoteall",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".promotealltime",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".promotetime",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".unmute",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".kick",
+    "category": "GROUP MANAGEMENT",
+    "description": "Remove a mentioned participant (bot and caller admins).",
+    "usage": ".kick @member",
+    "permission": "group admin",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".kickadmins",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".kickall",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".kickall2",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".kicknum",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".tag",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".tagadmin",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".tagall",
+    "category": "GROUP MANAGEMENT",
+    "description": "Mention all group participants (admins only).",
+    "usage": ".tagall [message]",
+    "permission": "group admin",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".tagall2",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".togstatus",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".grouplink",
+    "category": "GROUP MANAGEMENT",
+    "description": "Get the current group invite link (admins only).",
+    "usage": ".grouplink",
+    "permission": "group admin",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".groupstatus",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".groupinfo",
+    "category": "GROUP MANAGEMENT",
+    "description": "Show group metadata.",
+    "usage": ".groupinfo",
+    "permission": "group member",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".listadmin",
+    "category": "GROUP MANAGEMENT",
+    "description": "List current group admins.",
+    "usage": ".listadmin",
+    "permission": "group member",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".hidetag",
+    "category": "GROUP MANAGEMENT",
+    "description": "Mention all group participants without visible tags (admins only).",
+    "usage": ".hidetag [message]",
+    "permission": "group admin",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".vcf",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".resetlink",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".left",
+    "category": "GROUP MANAGEMENT",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".setnamegc",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Set this group title (admins only).",
+    "usage": ".setnamegc <title>",
+    "permission": "group admin",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".setdesc",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Set this group description (admins only).",
+    "usage": ".setdesc <description>",
+    "permission": "group admin",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".setppgc",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".delppgc",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".approve",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".reject",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".poll",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".slowmode",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antilink",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antibadword",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antibeg",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antispam",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antisticker",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antivoice",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antifile",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antiphoto",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antivideo",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antidelete",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antiemoji",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antitag",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antibot",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antimention",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antipoll",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antigif",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antiforwarded",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antilocation",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".anticontact",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antisale",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antinum",
+    "category": "GROUP SETTINGS AND MODERATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".autoreply",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".addreply",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".delreply",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".listreply",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".welcome",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".goodbye",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".mute",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".muteall",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".mutetime",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".mutealltime",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".listmute",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".unmuteall",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".warn",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".unwarn",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".listwarn",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".resetwarn",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".autoapprove",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".autoreject",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".lockall",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".unlockall",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".delall",
+    "category": "AUTOMATION",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".adds udo",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".delsudo",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".listsudo",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".autotyping",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".autobio",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".autoonline",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".autorecording",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".autoreact",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".autoreactstatus",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".autoviewstatus",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".vv",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".vv2",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".setprefix",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".setppbot",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".delete",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".public",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".self",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".mode",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".setname",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".setting",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".setpp",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".delpp",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".setinfo",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".delinfo",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".getname",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".getjid",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".block",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".unblock",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antidm",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antidmadd",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antidmdel",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".listantidm",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".anticall",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".anticalladd",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".antic allde l",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".listanticall",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".savestatus",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".save",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".broadcast",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".grouplist",
+    "category": "OWNER COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gfx1",
+    "category": "GFX COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gfx2",
+    "category": "GFX COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gfx3",
+    "category": "GFX COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gfx4",
+    "category": "GFX COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gfx5",
+    "category": "GFX COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gfx6",
+    "category": "GFX COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gfx7",
+    "category": "GFX COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gfx8",
+    "category": "GFX COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gfx9",
+    "category": "GFX COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gfx10",
+    "category": "GFX COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gfx11",
+    "category": "GFX COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".gfx12",
+    "category": "GFX COMMANDS",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".calculate",
+    "category": "GENERAL UTILITIES",
+    "description": "Evaluate a safe arithmetic expression.",
+    "usage": ".calculate <expression>",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".time",
+    "category": "GENERAL UTILITIES",
+    "description": "Show current local time, or time in an IANA zone.",
+    "usage": ".time [Area/City]",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".weather",
+    "category": "GENERAL UTILITIES",
+    "description": "Get current weather for a city.",
+    "usage": ".weather <city>",
+    "permission": "WEATHER_API_KEY",
+    "status": "implemented",
+    "apiRequirement": "WEATHER_API_KEY"
+  },
+  {
+    "name": ".genpass",
+    "category": "GENERAL UTILITIES",
+    "description": "Generate a cryptographically random password.",
+    "usage": ".genpass [length]",
+    "permission": "everyone",
+    "status": "implemented",
+    "apiRequirement": null
+  },
+  {
+    "name": ".getpp",
+    "category": "GENERAL UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".idch",
+    "category": "GENERAL UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".book",
+    "category": "GENERAL UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".recipe",
+    "category": "GENERAL UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".readmore",
+    "category": "GENERAL UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".remind",
+    "category": "GENERAL UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  },
+  {
+    "name": ".sciencefact",
+    "category": "GENERAL UTILITIES",
+    "description": "Not registered yet; this command is not available.",
+    "usage": "Not available",
+    "permission": "not implemented",
+    "status": "not_implemented",
+    "apiRequirement": "not implemented"
+  }
+]
