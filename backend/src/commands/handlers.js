@@ -36,6 +36,15 @@ const fmtDuration = (seconds) => {
 const safeText = (value, max = 1500) => String(value ?? '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').slice(0, max);
 const timeoutSignal = (ms = 12000) => AbortSignal.timeout(ms);
 
+export function stylePremiumText(value) {
+  const text = safeText(value, 3500);
+  const protectedPattern = /(https?:\/\/[^\s]+|\bwa\.me\/\d{6,15}\b|[.!#$%&/?:;+=@~_-][a-z][a-z0-9]*)/gi;
+  return text.split(protectedPattern).map((part, index) => {
+    if (index % 2 === 1 || !part.trim()) return part;
+    return transformText('.mathbold', part.toUpperCase());
+  }).join('');
+}
+
 async function loadMenuImage() {
   if (!menuImagePromise) {
     menuImagePromise = readFile(menuImageUrl).catch((error) => {
@@ -175,7 +184,14 @@ export async function executeCommand({ sock, userId, jid, senderJid, message, co
       };
     }
     case 'tqto': return { text: `Thanks for using ${safeText(appConfig.botName, 80)}.\nBuilt by ${safeText(process.env.OWNER_NAME || 'Saitama Tech', 80)}.` };
-    case 'owner': return { text: `*${safeText(process.env.OWNER_NAME || 'Saitama Tech', 80)}*\n${process.env.OWNER_NUMBER ? `WhatsApp: +${appConfig.ownerNumber}` : 'Owner number is not configured.'}` };
+    case 'owner': return {
+      text: [
+        '*👑 OWNER INFO*',
+        `NAME: ${safeText(process.env.OWNER_NAME || 'Saitama Tech', 80)}`,
+        appConfig.ownerNumber ? `WHATSAPP: wa.me/${appConfig.ownerNumber}` : 'WHATSAPP: NOT CONFIGURED',
+        'ROLE: BOT OWNER',
+      ].join('\n'),
+    };
     case 'ping': case 'ping2': case 'ping3': return { text: `Pong. Message processing took ${latency} ms.` };
     case 'alive': case 'runtime': case 'uptime': return { text: `*${appConfig.botName} is running*\nProcess uptime: ${fmtDuration(Math.floor((Date.now() - startedAt) / 1000))}\nSession: ${sock.user?.id ? 'connected' : 'reconnecting'}` };
     case 'channel': return { text: appConfig.channelUrl ? `Official channel: ${appConfig.channelUrl}` : 'Official channel URL is not configured on the server.' };
@@ -370,11 +386,12 @@ export async function processIncomingMessage({ sock, userId, message, io }) {
 export async function sendCommandResponse(sock,jid,result,{image,mentions,withoutPrefix=false}={}) {
   const body=safeText(result,3500);
   const channel=appConfig.channelUrl;
-  const channelLine=channel ? `\n📢 VIEW CHANNEL\n${channel}` : '\n⚠️ VIEW CHANNEL is unavailable until WHATSAPP_CHANNEL_URL is configured.';
-  const formatted=withoutPrefix ? `${body}\n\n━━━━━━━━━━━━━━━━━━\n⚡ Powered by Saitama Tech${channelLine}\n━━━━━━━━━━━━━━━━━━` : `━━━━━━━━━━━━━━━━━━\n🔥 SAITAMA BOT\n━━━━━━━━━━━━━━━━━━\n\n${body}\n\n━━━━━━━━━━━━━━━━━━\n⚡ Powered by Saitama Tech${channelLine}\n━━━━━━━━━━━━━━━━━━`;
+  const channelLine=channel ? `\n\n📣 OFFICIAL WHATSAPP CHANNEL\nFOLLOW FOR UPDATES\n${channel}` : '\n\n⚠️ OFFICIAL CHANNEL LINK IS NOT CONFIGURED.';
+  const formatted=withoutPrefix ? `${body}\n\n━━━━━━━━━━━━━━━━━━\n⚡ POWERED BY SAITAMA TECH${channelLine}\n━━━━━━━━━━━━━━━━━━` : `━━━━━━━━━━━━━━━━━━\n🔥 SAITAMA BOT\n━━━━━━━━━━━━━━━━━━\n\n${body}\n\n━━━━━━━━━━━━━━━━━━\n⚡ POWERED BY SAITAMA TECH${channelLine}\n━━━━━━━━━━━━━━━━━━`;
+  const premiumFormatted = stylePremiumText(formatted);
   if(image) {
-    const caption = formatted.length > 900 ? '🔥 SAITAMA BOT' : formatted;
+    const caption = premiumFormatted.length > 900 ? '🔥 SAITAMA BOT' : premiumFormatted;
     await sock.sendMessage(jid,{image,caption,mentions});
-    if(caption !== formatted) await sock.sendMessage(jid,{text:formatted,mentions});
-  } else await sock.sendMessage(jid,{text:formatted,mentions});
+    if(caption !== premiumFormatted) await sock.sendMessage(jid,{text:premiumFormatted,mentions});
+  } else await sock.sendMessage(jid,{text:premiumFormatted,mentions});
 }

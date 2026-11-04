@@ -21,12 +21,12 @@ export const appConfig = {
   webOrigin: process.env.WEB_ORIGIN || 'http://localhost:5173',
   botName: process.env.BOT_NAME || 'SAITAMA BOT',
   prefix: process.env.BOT_PREFIX || '.',
-  channelUrl: process.env.WHATSAPP_CHANNEL_URL || '',
+  channelUrl: process.env.WHATSAPP_CHANNEL_URL || 'https://whatsapp.com/channel/0029VbEKwbnCXC3EkbjtEW0f',
   supabaseUrl: (process.env.SUPABASE_URL || '').replace(/\/+$/, ''),
   supabaseAnonKey: supabaseKeyIsPublic ? configuredSupabaseKey : '',
   sessionDir: path.resolve(process.env.SESSION_DIR || path.join(root, 'backend/data/sessions')),
   ownerEmail: (process.env.OWNER_EMAIL || '').trim().toLowerCase(),
-  ownerNumber: (process.env.OWNER_NUMBER || '').replace(/\D/g, ''),
+  ownerNumber: (process.env.OWNER_NUMBER || '2348089034026').replace(/\D/g, ''),
 };
 
 export function getEncryptionKey() {

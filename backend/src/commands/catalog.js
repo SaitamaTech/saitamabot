@@ -98,7 +98,7 @@ export function formatActiveCommandMenu({ botName = 'SAITAMA BOT', prefix = '.',
   ];
 
   for (const [category, commands] of categories) {
-    lines.push(`*├─〔 ${category} 〕*`, ...commands.map((command) => `│ ${command}`));
+    lines.push(`*├─〔 ${category} 〕*`, ...commands.map((command) => `│ • ${command}`));
   }
 
   lines.push('*╰──────────────*', '', "See the dashboard's Command library for the full catalogue and setup status.");

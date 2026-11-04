@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { appConfig } from '../config.js';
 import catalog from './catalog.json' with { type: 'json' };
 import { findCommandSuggestion, formatActiveCommandMenu, formatCommandUsage, formatUnknownCommand } from './catalog.js';
-import { executeCommand, isSafePublicUrl, parseSafeExpression, reactToCommand, sendCommandResponse } from './handlers.js';
+import { executeCommand, isSafePublicUrl, parseSafeExpression, reactToCommand, sendCommandResponse, stylePremiumText } from './handlers.js';
 import { transformText } from './textStyles.js';
 
 test('catalog includes all requested commands and labels non-handled entries honestly', () => {
@@ -19,7 +20,7 @@ test('active command menu is grouped and uses the account prefix', () => {
   assert.match(menu, /Name: Test Bot/);
   assert.match(menu, /Prefix: !/);
   assert.match(menu, /Uptime: 2h 5m/);
-  assert.match(menu, /├─〔 CORE COMMANDS 〕\*\n│ !menu\n│ !owner/);
+  assert.match(menu, /├─〔 CORE COMMANDS 〕\*\n│ • !menu\n│ • !owner/);
   assert.match(menu, /├─〔 AI COMMANDS 〕/);
   assert.doesNotMatch(menu, /├─〔 SPORTS 〕/);
   assert.doesNotMatch(menu, /\.menu/);
@@ -35,6 +36,15 @@ test('command help suggests likely typos and shows the configured prefix and usa
     formatCommandUsage(catalog.find((entry) => entry.name === '.ai'), '!'),
     'How to use: !ai <question>\nWhat it does: Ask the configured OpenAI-compatible provider a question.',
   );
+});
+
+test('premium reply typography preserves URLs, phone links, command syntax, and whitespace', () => {
+  const styled = stylePremiumText('hello\nUse .menu or .ai <question>\nwa.me/2348089034026 https://whatsapp.com/channel/test');
+
+  assert.match(styled, /𝐇𝐄𝐋𝐋𝐎/);
+  assert.match(styled, /\n𝐔𝐒𝐄 \.menu 𝐎𝐑 \.ai <𝐐𝐔𝐄𝐒𝐓𝐈𝐎𝐍>/);
+  assert.match(styled, /wa\.me\/2348089034026/);
+  assert.match(styled, /https:\/\/whatsapp\.com\/channel\/test/);
 });
 
 test('menu command includes the supplied display image and sends long menu text separately', async () => {
@@ -57,8 +67,23 @@ test('menu command includes the supplied display image and sends long menu text 
   assert.equal(sent.length, 2);
   assert.equal(sent[0].payload.image, result.image);
   assert.ok(sent[0].payload.caption.length <= 900);
-  assert.match(sent[1].payload.text, /CORE COMMANDS/);
-  assert.match(sent[1].payload.text, /GROUP MANAGEMENT/);
+  assert.match(sent[1].payload.text, /• !menu/);
+  assert.match(sent[1].payload.text, /https:\/\/whatsapp\.com\/channel\/0029VbEKwbnCXC3EkbjtEW0f/);
+});
+
+test('owner command shows the configured WhatsApp contact as a wa.me link', async () => {
+  const result = await executeCommand({
+    sock: {},
+    userId: 'owner-test',
+    jid: 'owner-test@s.whatsapp.net',
+    senderJid: 'owner-test@s.whatsapp.net',
+    message: {},
+    command: 'owner',
+    args: [],
+    startedAt: Date.now(),
+  });
+
+  assert.ok(result.text.includes(`wa.me/${appConfig.ownerNumber}`));
 });
 
 test('recognized and unknown commands can be acknowledged with a reaction', async () => {
